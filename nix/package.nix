@@ -1,8 +1,8 @@
 {
-  pkgs ? import <nixpkgs> { },
+  rustPlatform,
 }:
 
-pkgs.rustPlatform.buildRustPackage {
+rustPlatform.buildRustPackage {
   pname = "palette";
   version = "0.1.0";
   src = ./..;
