@@ -95,7 +95,7 @@ The package expression is at [`nix/package.nix`](./nix/package.nix). Use it in y
 ```nix
 { pkgs, ... }:
 let 
-  palette = pkgs.callPackage /path/to/package.nix;
+  palette = pkgs.callPackage /path/to/package.nix {};
 in
 {
   environment.systemPackages = [
@@ -242,6 +242,10 @@ Palette files are plain JSON. Three formats are accepted:
 ```
 
 All formats are normalised to the map format on save. Missing `hsl`/`rgb` fields are recomputed from hex.
+
+> [!Warn]
+> Colour names are sanitized to [a-zA-Z0-9_-] on load. Names with other characters will be altered
+> (e.g., `my colour` becomes `my-colour`). This ensures palette files remain scriptable with jq and other tools.
 
 ---
 
