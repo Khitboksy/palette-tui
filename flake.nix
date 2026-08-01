@@ -2,7 +2,7 @@
   description = "Terminal colour palette manager";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-26.05";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-26.05";
   };
 
   outputs =
