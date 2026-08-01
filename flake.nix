@@ -2,7 +2,7 @@
   description = "Terminal colour palette manager";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-26.05";
   };
 
   outputs =
@@ -23,16 +23,7 @@
           pkgs = nixpkgs.legacyPackages.${system};
         in
         {
-          default = pkgs.rustPlatform.buildRustPackage {
-            pname = "palette";
-            version = "0.1.0";
-            src = ./.;
-            cargoLock.lockFile = ./Cargo.lock;
-            postInstall = ''
-              mkdir -p $out/share/palette/palettes
-              cp palettes/*.json $out/share/palette/palettes/
-            '';
-          };
+          default = import ./nix/package.nix { inherit pkgs; };
         }
       );
 
@@ -42,22 +33,13 @@
           pkgs = nixpkgs.legacyPackages.${system};
         in
         {
-          default = pkgs.mkShellNoCC {
-            packages = with pkgs; [
-              rustc
-              cargo
-              clippy
-              rustfmt
-              cargo-watch
-              gcc
-            ];
-          };
+          default = import ./nix/shell.nix { inherit pkgs; };
         }
       );
 
-      homeManagerModules.default = import ./modules/hm.nix { inherit self; };
+      homeManagerModules.default = import ./nix/hm.nix { inherit self; };
 
-      nixosModules.default = import ./modules/nixos.nix { inherit self; };
+      nixosModules.default = import ./nix/nixos.nix { inherit self; };
 
     };
 }
