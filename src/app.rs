@@ -107,23 +107,44 @@ pub enum Mode {
 // Input types
 #[derive(Debug, Clone)]
 pub enum InputMode {
-    HexInput,
-    SaveOverwrite {
+
+    // Generic Input Modes
+    YesOrNo {
+        prompt: String,
+        action: YesOrNoAction,
+    },
+    YesOrName {
         name: String,
     },
-    SaveNew,
-    SaveNamed {
-        name: String,
-    },
-    NewPaletteName,
-    NewPaletteHex,
-    NewPaletteColourName,
-    AddDir,
-    FormatSelect {
+    ItemName,
+    Toggles {
         dir: PathBuf,
         hex: bool,
         hsl: bool,
         rgb: bool,
+    },
+
+    // Flow-specific modes
+    HexInput,
+    NewPaletteHex,
+    AddDir,
+}
+
+/// Payload carried by `YesOrNo` to distinguish what happens on confirm.
+#[derive(Debug, Clone)]
+pub enum YesOrNoAction {
+    /// Save a colour under this name (replaces old SaveNamed)
+    SaveNamed { name: String },
+    /// Delete a colour from a palette
+    DeleteColour {
+        colour_name: String,
+        palette_idx: usize,
+    },
+    /// Delete an entire palette file
+    DeletePalette {
+        palette_idx: usize,
+        palette_name: String,
+        colour_count: usize,
     },
 }
 
@@ -207,7 +228,8 @@ impl App {
 
         // Now scan directories (theme.json exists if it was just created)
         let dirs = config.all_dirs();
-        let (palettes, dir_groups, scan_warnings) = palette::scan_directories(&dirs);
+        let (palettes, dir_groups, scan_warnings) =
+            palette::scan_directories(&dirs, &[palette::default_palettes()]);
 
         // Find the first palette from the default dir (not themes or extras)
         let default_dir = config.default_dir_path();
@@ -365,7 +387,8 @@ impl App {
     /// Rescan all directories (after adding a dir or creating a palette)
     pub fn rescan(&mut self) {
         let dirs = self.palette.config.all_dirs();
-        let (palettes, dir_groups, scan_warnings) = palette::scan_directories(&dirs);
+        let (palettes, dir_groups, scan_warnings) =
+            palette::scan_directories(&dirs, &[palette::default_palettes()]);
         self.palette.palettes = palettes;
         self.palette.dir_groups = dir_groups;
         for msg in scan_warnings {
