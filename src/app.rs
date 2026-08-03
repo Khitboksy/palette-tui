@@ -107,7 +107,6 @@ pub enum Mode {
 // Input types
 #[derive(Debug, Clone)]
 pub enum InputMode {
-
     // Generic Input Modes
     YesOrNo {
         prompt: String,
@@ -141,11 +140,7 @@ pub enum YesOrNoAction {
         palette_idx: usize,
     },
     /// Delete an entire palette file
-    DeletePalette {
-        palette_idx: usize,
-        palette_name: String,
-        colour_count: usize,
-    },
+    DeletePalette { palette_idx: usize },
 }
 
 // Input attributes
