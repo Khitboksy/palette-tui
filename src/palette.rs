@@ -433,6 +433,17 @@ impl PaletteFile {
         fs::write(&self.path, json)
             .map_err(|e| format!("Failed to write {}: {}", self.path.display(), e))
     }
+
+    /// Remove a colour by name and save the file.
+    pub fn remove_colour(&mut self, name: &str) -> Result<(), String> {
+        self.colours.retain(|c| c.name != name);
+        self.save(&std::collections::HashMap::new())
+    }
+}
+
+/// Delete a palette JSON file from disk.
+pub fn remove_palette_file(path: &Path) -> Result<(), String> {
+    fs::remove_file(path).map_err(|e| format!("Failed to delete {}: {}", path.display(), e))
 }
 
 // Directory grouping
