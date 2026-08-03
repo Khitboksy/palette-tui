@@ -86,6 +86,20 @@ fn handle_preview(app: &mut App, code: KeyCode) -> bool {
         KeyCode::Char('e') => {
             app.begin_edit();
         }
+        KeyCode::Char('D') if !app.is_random && app.selected < app.visible_len() => {
+            let (name, _) = app.visible_entry(app.selected);
+            let colour_name = name.to_string();
+            let palette_idx = app.palette.idx;
+            let palette_name = app.palette.palettes[palette_idx].name.clone();
+            app.input.buf.clear();
+            app.input.mode = Some(InputMode::YesOrNo {
+                prompt: format!("delete {colour_name} from {palette_name}? [y/n]: "),
+                action: YesOrNoAction::DeleteColour {
+                    colour_name,
+                    palette_idx,
+                },
+            });
+        }
         KeyCode::Tab => {
             app.palette.cursor = 0;
             app.palette.preview_idx = Some(app.palette.idx);
@@ -419,6 +433,18 @@ fn handle_palette_select(app: &mut App, code: KeyCode) -> bool {
             app.input.buf.clear();
             app.input.mode = Some(InputMode::AddDir);
         }
+        KeyCode::Char('D') => {
+            if let PaletteSelectItem::Palette(idx) = palette_select_item(app, app.palette.cursor) {
+                let pf = &app.palette.palettes[idx];
+                let palette_name = pf.name.clone();
+                let colour_count = pf.colours.len();
+                app.input.buf.clear();
+                app.input.mode = Some(InputMode::YesOrNo {
+                    prompt: format!("delete {palette_name} ({colour_count} colours)? [y/n]: "),
+                    action: YesOrNoAction::DeletePalette { palette_idx: idx },
+                });
+            }
+        }
         KeyCode::Char('f') => {
             // Set dir_formats for the highlighted directory
             let dir = match palette_select_item(app, app.palette.cursor) {
@@ -577,8 +603,35 @@ fn handle_yes_or_no(app: &mut App, code: KeyCode) -> bool {
                         app.write_colour_to_palette(&name);
                         app.edit.colour_name = None;
                     }
-                    // DeleteColour and DeletePalette handled in later steps
-                    _ => {}
+                    YesOrNoAction::DeleteColour {
+                        colour_name,
+                        palette_idx,
+                    } => {
+                        let colour_name = colour_name.clone();
+                        let palette_idx = *palette_idx;
+                        if let Some(pf) = app.palette.palettes.get_mut(palette_idx) {
+                            if let Err(e) = pf.remove_colour(&colour_name) {
+                                app.set_status_error(&e);
+                            } else {
+                                app.set_status_ok(&format!("deleted {colour_name}"));
+                            }
+                        }
+                        app.rescan();
+                        app.mode = Mode::Preview;
+                    }
+                    YesOrNoAction::DeletePalette { palette_idx } => {
+                        let palette_idx = *palette_idx;
+                        if let Some(pf) = app.palette.palettes.get(palette_idx) {
+                            let path = pf.path.clone();
+                            if let Err(e) = palette::remove_palette_file(&path) {
+                                app.set_status_error(&e);
+                            } else {
+                                app.set_status_ok(&format!("deleted {}", pf.name));
+                            }
+                        }
+                        app.rescan();
+                        app.mode = Mode::Preview;
+                    }
                 }
             }
         }
