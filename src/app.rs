@@ -534,4 +534,19 @@ impl App {
             }
         }
     }
+
+    pub fn pair_clear(&mut self) {
+        self.pair.paired = None;
+        self.pair.idx = None;
+        self.pair.similar_name = None;
+        self.pair.name.clear();
+        self.set_status_ok("pair cleared");
+    }
+    pub fn pair_select(&mut self) {
+        let len = self.visible_len();
+        if len > 0 {
+            self.pair.cursor = self.selected.max(1) % len;
+            self.mode = Mode::PairSelect;
+        }
+    }
 }
