@@ -27,8 +27,7 @@ fn main() -> io::Result<()> {
         let fallback = std::path::Path::new("palettes");
         if fallback.is_dir() {
             let dirs = vec![fallback.to_path_buf()];
-            let (palettes, dir_groups, scan_warnings) =
-                palette::scan_directories(&dirs, &[]);
+            let (palettes, dir_groups, scan_warnings) = palette::scan_directories(&dirs, &[]);
             app.palette.palettes = palettes;
             app.palette.dir_groups = dir_groups;
             for msg in scan_warnings {
