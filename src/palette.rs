@@ -23,7 +23,7 @@ fn config_path() -> PathBuf {
     xdg_config_home().join("palette").join("config.toml")
 }
 
-fn default_palette_dir() -> PathBuf {
+pub fn default_palettes() -> PathBuf {
     xdg_config_home().join("palette").join("palettes")
 }
 
@@ -94,22 +94,40 @@ impl Config {
     pub fn default_dir_path(&self) -> PathBuf {
         match &self.default_dir {
             Some(d) => PathBuf::from(d),
-            None => default_palette_dir(),
+            None => default_palettes(),
         }
     }
 
-    // Get all directories in scan order: themes first, then default, then extras.
+    // Get all directories in scan order:
+    //   1. themes dir (always)
+    //   2. configured default dir (if set)
+    //   3. internal palettes dir (always -- hidden when empty)
+    //   4. extra dirs from config
     pub fn all_dirs(&self) -> Vec<PathBuf> {
+        let themes = themes_dir();
+        let internal_palettes = default_palettes();
         let default = self.default_dir_path();
         let mut extras: Vec<PathBuf> = self.extra_dirs.iter().map(PathBuf::from).collect();
         extras.sort();
-        let themes = themes_dir();
         let mut dirs = Vec::new();
+        // 1. Themes (always)
         if !dirs.contains(&themes) {
             dirs.push(themes);
         }
-        dirs.push(default);
-        dirs.extend(extras);
+        // 2. Configured default dir
+        if !dirs.contains(&default) {
+            dirs.push(default.clone());
+        }
+        // 3. Internal palettes dir (always, skip if same as default)
+        if default != internal_palettes && !dirs.contains(&internal_palettes) {
+            dirs.push(internal_palettes);
+        }
+        // 4. Extra dirs
+        for d in extras {
+            if !dirs.contains(&d) {
+                dirs.push(d);
+            }
+        }
         dirs
     }
 
@@ -421,10 +439,16 @@ impl PaletteFile {
 pub struct DirGroup {
     pub path: PathBuf,
     pub palette_indices: Vec<usize>,
+    pub hidden_when_empty: bool,
 }
 
 // Directory scanning
-pub fn scan_directories(dirs: &[PathBuf]) -> (Vec<PaletteFile>, Vec<DirGroup>, Vec<String>) {
+// `hidden_dirs`: directories in this list get `hidden_when_empty = true` on
+// their DirGroup, so the UI can hide them instead of showing "(empty)".
+pub fn scan_directories(
+    dirs: &[PathBuf],
+    hidden_dirs: &[PathBuf],
+) -> (Vec<PaletteFile>, Vec<DirGroup>, Vec<String>) {
     let mut palettes = Vec::new();
     let mut dir_groups = Vec::new();
     let mut warnings = Vec::new();
@@ -450,6 +474,7 @@ pub fn scan_directories(dirs: &[PathBuf]) -> (Vec<PaletteFile>, Vec<DirGroup>, V
         dir_groups.push(DirGroup {
             path: dir.clone(),
             palette_indices: indices,
+            hidden_when_empty: hidden_dirs.contains(dir),
         });
     }
 
