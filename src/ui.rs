@@ -771,8 +771,8 @@ pub fn render_palette_select(frame: &mut Frame, area: Rect, app: &App) {
     let mut selectable_count: usize = 0;
 
     for dg in &app.palette.dir_groups {
-        // Skip directories that are hidden when empty (e.g. the internal palettes dir)
-        if dg.hidden_when_empty && dg.palette_indices.is_empty() {
+        // Skip hidden dirs (hidden_when_empty || hidden) when empty and show_hidden is off
+        if (dg.hidden_when_empty || dg.hidden) && dg.palette_indices.is_empty() && !app.palette.show_hidden {
             continue;
         }
 
