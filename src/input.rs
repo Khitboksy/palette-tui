@@ -21,7 +21,7 @@ pub fn handle_key(key: KeyEvent, app: &mut App) -> bool {
     }
 
     // If we are in a text-input prompt, handle it globally
-    if let Some(ref input_mode) = app.input.mode.clone() {
+    if let Some(input_mode) = &app.input.mode {
         return match input_mode {
             InputMode::HexInput => handle_hex_input(app, key.code),
             InputMode::YesOrName { .. } => handle_yes_or_name(app, key.code),
