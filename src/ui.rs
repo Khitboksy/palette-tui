@@ -268,8 +268,8 @@ pub fn render_swatch_border(
 // render_input_prompt. standalone input prompt overlay
 pub fn render_input_prompt(frame: &mut Frame, inner: Rect, app: &App) {
     if let Some(ref input_mode) = app.input.mode {
-        // FormatSelect: toggle UI
-        if let InputMode::FormatSelect { hex, hsl, rgb, .. } = input_mode {
+        // Toggle UI
+        if let InputMode::Toggles { hex, hsl, rgb, .. } = input_mode {
             let focused = app.input.format_focused;
             let formats = [("hex", *hex), ("hsl", *hsl), ("rgb", *rgb)];
             let mut spans = vec![Span::styled(
@@ -311,14 +311,19 @@ pub fn render_input_prompt(frame: &mut Frame, inner: Rect, app: &App) {
         let buf = &app.input.buf;
         let prompt_str = match input_mode {
             InputMode::HexInput => String::from("hex: "),
-            InputMode::SaveOverwrite { name } => format!("Overwrite '{name}'? [y/Name]: "),
-            InputMode::SaveNew => String::from("Name: "),
-            InputMode::SaveNamed { name } => format!("save {name} to palette? [y/n]: "),
-            InputMode::NewPaletteName => String::from("palette name: "),
+            InputMode::YesOrName { .. } => {
+                // Extract name from mode for the prompt display
+                if let InputMode::YesOrName { name } = input_mode {
+                    format!("Overwrite '{name}'? [y/Name]: ")
+                } else {
+                    unreachable!()
+                }
+            }
+            InputMode::ItemName => String::from("Name: "),
+            InputMode::YesOrNo { prompt, .. } => prompt.clone(),
             InputMode::NewPaletteHex => String::from("initial hex: "),
-            InputMode::NewPaletteColourName => String::from("colour name: "),
             InputMode::AddDir => String::from("directory path: "),
-            InputMode::FormatSelect { .. } => unreachable!(),
+            InputMode::Toggles { .. } => unreachable!(),
         };
         let input_line = Line::from(vec![
             Span::styled(
@@ -766,6 +771,11 @@ pub fn render_palette_select(frame: &mut Frame, area: Rect, app: &App) {
     let mut selectable_count: usize = 0;
 
     for dg in &app.palette.dir_groups {
+        // Skip directories that are hidden when empty (e.g. the internal palettes dir)
+        if dg.hidden_when_empty && dg.palette_indices.is_empty() {
+            continue;
+        }
+
         // Directory header (non-selectable)
         // Show path relative to home directory
         let dir_display = helpers::collapse_home(&dg.path.display().to_string());
