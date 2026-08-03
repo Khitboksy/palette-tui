@@ -32,9 +32,18 @@ pub fn themes_dir() -> PathBuf {
 }
 
 // Config
+#[derive(Serialize, Deserialize, Default, Clone)]
+pub struct DefaultConfig {
+    /// Directory to open on launch (falls back to $XDG_CONFIG_HOME/palette/palettes).
+    pub dir: Option<String>,
+    /// Palette filename without .json extension to select on launch.
+    pub palette: Option<String>,
+}
+
 #[derive(Serialize, Deserialize, Default)]
 pub struct Config {
-    pub default_dir: Option<String>,
+    #[serde(default)]
+    pub default: DefaultConfig,
     #[serde(default)]
     pub extra_dirs: Vec<String>,
     #[serde(default)]
@@ -58,7 +67,11 @@ impl Config {
             Err(_) => {
                 // Create default config file
                 let default_content = "# palette configuration\n\
-                    # default_dir = \"/path/to/palettes\"\n\
+                    \n\
+                    # [default]\n\
+                    # dir = \"/path/to/palettes\"\n\
+                    # palette = \"catppuccin-mocha\"\n\
+                    \n\
                     extra_dirs = []\n\
                     \n\
                     # Per-directory save formats\n\
@@ -92,10 +105,15 @@ impl Config {
     // Get the default palette directory path.
     // Uses config value if set, otherwise $XDG_CONFIG_HOME/palette/palettes.
     pub fn default_dir_path(&self) -> PathBuf {
-        match &self.default_dir {
+        match &self.default.dir {
             Some(d) => PathBuf::from(d),
             None => default_palettes(),
         }
+    }
+
+    // Get the optional default palette name (filename without .json extension).
+    pub fn default_palette_name(&self) -> Option<&str> {
+        self.default.palette.as_deref()
     }
 
     // Get all directories in scan order:

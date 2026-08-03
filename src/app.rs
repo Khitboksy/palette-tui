@@ -229,12 +229,23 @@ impl App {
         let (palettes, dir_groups, scan_warnings) =
             palette::scan_directories(&dirs, &[palette::default_palettes()]);
 
-        // Find the first palette from the default dir (not themes or extras)
+        // Find the initial palette: match by name if default.palette is set,
+        // otherwise the first palette from the default dir.
         let default_dir = config.default_dir_path();
-        let initial_idx = dir_groups
-            .iter()
-            .find(|dg| dg.path == default_dir)
-            .and_then(|dg| dg.palette_indices.first().copied())
+        let initial_idx = config
+            .default_palette_name()
+            .and_then(|name| {
+                palettes.iter().position(|pf| {
+                    pf.source_dir == default_dir
+                        && pf.path.file_stem().and_then(|s| s.to_str()) == Some(name)
+                })
+            })
+            .or_else(|| {
+                dir_groups
+                    .iter()
+                    .find(|dg| dg.path == default_dir)
+                    .and_then(|dg| dg.palette_indices.first().copied())
+            })
             .or_else(|| {
                 palettes
                     .iter()
