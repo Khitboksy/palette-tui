@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::path::PathBuf;
 use std::time::Instant;
 
@@ -177,6 +178,7 @@ pub struct PaletteState {
     pub idx: usize,
     pub cursor: usize,
     pub preview_idx: Option<usize>,
+    pub show_hidden: bool,
 }
 
 // Status attributes
@@ -202,6 +204,7 @@ pub struct App {
     pub edit: EditState,
     pub palette: PaletteState,
     pub status: StatusState,
+    pub hidden_dirs: HashSet<PathBuf>,
 }
 
 impl App {
@@ -288,12 +291,14 @@ impl App {
                 idx: initial_idx,
                 cursor: 0,
                 preview_idx: None,
+                show_hidden: false,
             },
             status: StatusState {
                 msg: String::new(),
                 level: StatusLevel::Ok,
                 expiry: None,
             },
+            hidden_dirs: HashSet::new(),
         };
         if let Some(msg) = theme_err {
             app.set_status_warn(&msg);
@@ -386,6 +391,12 @@ impl App {
             palette::scan_directories(&dirs, &[palette::default_palettes()]);
         self.palette.palettes = palettes;
         self.palette.dir_groups = dir_groups;
+        // Re-apply user-hidden dirs
+        for dg in &mut self.palette.dir_groups {
+            if self.hidden_dirs.contains(&dg.path) {
+                dg.hidden = true;
+            }
+        }
         for msg in scan_warnings {
             self.set_status_warn(&msg);
         }
