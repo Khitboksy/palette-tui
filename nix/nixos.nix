@@ -12,7 +12,10 @@ let
   palette = self.packages.${system}.default;
   tomlFormat = pkgs.formats.toml { };
   configFile = tomlFormat.generate "palette-config.toml" {
-    default_dir = cfg.defaultDir;
+    default = {
+      dir = cfg.default.dir;
+      palette = cfg.default.palette;
+    };
     theme_palette = cfg.themeFile;
     extra_dirs = cfg.extraDirs;
     dir_formats = cfg.dirFormats;
@@ -29,10 +32,17 @@ in
       description = "Whether to enable palette-tui";
     };
 
-    defaultDir = lib.mkOption {
-      type = lib.types.nullOr lib.types.path;
-      default = null;
-      description = "Default palette directory to open on launch";
+    default = {
+      dir = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "Default palette directory to open on launch";
+      };
+      palette = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "Optional default palette to open on launch";
+      };
     };
 
     themeFile = lib.mkOption {
