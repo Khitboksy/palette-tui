@@ -65,9 +65,11 @@ in
   config = lib.mkIf cfg.enable {
     home.packages = [ palette ];
 
-    xdg.configFile = {
-      "palette/config.toml".source = configFile;
-      "palette/palettes".source = "${palette}/share/palette/palettes";
-    };
+    xdg.configFile."palette/config.toml".source = configFile;
+
+    home.activation.copyPalettes = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      mkdir -p "${config.xdg.configHome}/palette/palettes"
+      cp -rn ${palette}/share/palette/palettes/* "${config.xdg.configHome}/palette/palettes/" 2>/dev/null || true
+    '';
   };
 }
