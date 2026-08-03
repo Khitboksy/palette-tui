@@ -28,6 +28,48 @@ fn hotkey_sep(sep: &str, theme: &ThemeColors) -> Span<'static> {
     Span::styled(sep.to_string(), Style::default().fg(theme.hotkey_sep))
 }
 
+/// Build hotkey hint spans from a DSL string.
+/// `|` and `-` become separators, everything else is a hotkey letter.
+fn hotkey_spans(dsl: &str, theme: &ThemeColors) -> Vec<Span<'static>> {
+    let mut spans = Vec::new();
+    let chars: Vec<char> = dsl.chars().collect();
+    let mut i = 0;
+    while i < chars.len() {
+        match chars[i] {
+            '|' | '-' => {
+                spans.push(hotkey_sep(&chars[i].to_string(), theme));
+                i += 1;
+            }
+            ' ' => {
+                // Leading space on first letter, or trailing space on last letter
+                if spans.is_empty() {
+                    // Leading space
+                    if i + 1 < chars.len() && chars[i + 1] != '|' && chars[i + 1] != '-' {
+                        spans.push(hotkey_letter(&format!(" {}", chars[i + 1]), theme));
+                        i += 2;
+                    } else {
+                        i += 1;
+                    }
+                } else {
+                    // Trailing space
+                    if let Some(last) = spans.last_mut() {
+                        *last = Span::styled(
+                            format!("{} ", last.content),
+                            Style::default().fg(theme.hotkey),
+                        );
+                    }
+                    i += 1;
+                }
+            }
+            c => {
+                spans.push(hotkey_letter(&c.to_string(), theme));
+                i += 1;
+            }
+        }
+    }
+    spans
+}
+
 // render_list. left panel colour list with swatch preview
 pub fn render_list(frame: &mut Frame, area: Rect, app: &App) {
     // Get current palette path
@@ -184,25 +226,12 @@ pub fn render_list(frame: &mut Frame, area: Rect, app: &App) {
 
     // Keybind hint on top-right of list border -- only in preview mode
     if app.mode == Mode::Preview {
-        let hint_spans = vec![
-            hotkey_letter(" tab", &app.theme),
-            hotkey_sep("|", &app.theme),
-            hotkey_letter("h", &app.theme),
-            hotkey_sep("-", &app.theme),
-            hotkey_letter("j", &app.theme),
-            hotkey_sep("-", &app.theme),
-            hotkey_letter("k", &app.theme),
-            hotkey_sep("-", &app.theme),
-            hotkey_letter("l", &app.theme),
-            hotkey_sep("|", &app.theme),
-            hotkey_letter("r ", &app.theme),
-        ];
-        let hint_width = 15u16;
-        let hint_x = area.x + area.width - hint_width - 1;
+        let hint_spans = hotkey_spans(" tab|h-j-k-l|r-D ", &app.theme);
+        let hint_width = 19u16;
         frame.render_widget(
             Paragraph::new(Line::from(hint_spans)),
             Rect {
-                x: hint_x,
+                x: area.x + area.width - 18,
                 y: area.y,
                 width: hint_width,
                 height: 1,
@@ -728,25 +757,7 @@ pub fn render_preview(frame: &mut Frame, area: Rect, app: &App) {
 
     // Keybind hints on bottom-left of preview border -- edit mode
     if app.mode == Mode::Edit {
-        let hint_spans = vec![
-            hotkey_letter(" r", &app.theme),
-            hotkey_sep("-", &app.theme),
-            hotkey_letter("g", &app.theme),
-            hotkey_sep("-", &app.theme),
-            hotkey_letter("b", &app.theme),
-            hotkey_sep("|", &app.theme),
-            hotkey_letter("j", &app.theme),
-            hotkey_sep("-", &app.theme),
-            hotkey_letter("l", &app.theme),
-            hotkey_sep("-", &app.theme),
-            hotkey_letter("k", &app.theme),
-            hotkey_sep("|", &app.theme),
-            hotkey_letter("w", &app.theme),
-            hotkey_sep("-", &app.theme),
-            hotkey_letter("e", &app.theme),
-            hotkey_sep("-", &app.theme),
-            hotkey_letter("z ", &app.theme),
-        ];
+        let hint_spans = hotkey_spans(" r-g-b|j-l-k|w-e-z ", &app.theme);
         let hint_width = 21u16;
         frame.render_widget(
             Paragraph::new(Line::from(hint_spans)),
@@ -866,18 +877,8 @@ pub fn render_palette_select(frame: &mut Frame, area: Rect, app: &App) {
     }
 
     // Keybind hint on bottom-left of palette select border
-    let hint_spans = vec![
-        hotkey_letter(" j", &app.theme),
-        hotkey_sep("-", &app.theme),
-        hotkey_letter("k", &app.theme),
-        hotkey_sep("|", &app.theme),
-        hotkey_letter("a", &app.theme),
-        hotkey_sep("-", &app.theme),
-        hotkey_letter("n", &app.theme),
-        hotkey_sep("-", &app.theme),
-        hotkey_letter("f ", &app.theme),
-    ];
-    let hint_width = 11u16;
+    let hint_spans = hotkey_spans(" h-H-D-|j-k|a-n-f ", &app.theme);
+    let hint_width = 18u16;
     frame.render_widget(
         Paragraph::new(Line::from(hint_spans)),
         Rect {
