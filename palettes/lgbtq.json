@@ -1,77 +1,17 @@
 {
-  "white": {
-    "hex": "#ffffff",
-    "hsl": "hsl(0, 0%, 100%)",
-    "rgb": "rgb(255, 255, 255)"
-  },
-  "trans-blue": {
-    "hex": "#55cdfd",
-    "hsl": "hsl(197, 98%, 66%)",
-    "rgb": "rgb(85, 205, 253)"
-  },
-  "trans-pink": {
-    "hex": "#f8aab7",
-    "hsl": "hsl(350, 85%, 82%)",
-    "rgb": "rgb(248, 170, 183)"
-  },
-  "pride-red": {
-    "hex": "#e40303",
-    "hsl": "hsl(0, 97%, 45%)",
-    "rgb": "rgb(228, 3, 3)"
-  },
-  "pride-orange": {
-    "hex": "#ff8c00",
-    "hsl": "hsl(33, 100%, 50%)",
-    "rgb": "rgb(255, 140, 0)"
-  },
-  "pride-yellow": {
-    "hex": "#ffed00",
-    "hsl": "hsl(56, 100%, 50%)",
-    "rgb": "rgb(255, 237, 0)"
-  },
-  "pride-green": {
-    "hex": "#008026",
-    "hsl": "hsl(138, 100%, 25%)",
-    "rgb": "rgb(0, 128, 38)"
-  },
-  "pride-blue": {
-    "hex": "#004cff",
-    "hsl": "hsl(222, 100%, 50%)",
-    "rgb": "rgb(0, 76, 255)"
-  },
-  "pride-purple": {
-    "hex": "#743982",
-    "hsl": "hsl(288, 39%, 37%)",
-    "rgb": "rgb(116, 57, 130)"
-  },
-  "lesbian-burnt": {
-    "hex": "#d52d00",
-    "hsl": "hsl(13, 100%, 42%)",
-    "rgb": "rgb(213, 45, 0)"
-  },
-  "lesbian-orange": {
-    "hex": "#ef7627",
-    "hsl": "hsl(24, 86%, 55%)",
-    "rgb": "rgb(239, 118, 39)"
-  },
-  "lesbian-peach": {
-    "hex": "#ff9a56",
-    "hsl": "hsl(24, 100%, 67%)",
-    "rgb": "rgb(255, 154, 86)"
-  },
-  "lesbian-pink": {
-    "hex": "#d162a4",
-    "hsl": "hsl(324, 55%, 60%)",
-    "rgb": "rgb(209, 98, 164)"
-  },
-  "lesbian-mauve": {
-    "hex": "#b55690",
-    "hsl": "hsl(323, 39%, 52%)",
-    "rgb": "rgb(181, 86, 144)"
-  },
-  "lesbian-rose": {
-    "hex": "#a30262",
-    "hsl": "hsl(324, 98%, 32%)",
-    "rgb": "rgb(163, 2, 98)"
-  }
+  "white":          { "hex": "#ffffff", "hsl": "hsl(0, 0.0%, 100.0%)"    , "rgb": "rgb(255, 255, 255)"  },
+  "trans-blue":     { "hex": "#55cdfd", "hsl": "hsl(197, 97.7%, 66.3%)"  , "rgb": "rgb(85, 205, 253)"   },
+  "trans-pink":     { "hex": "#f8aab7", "hsl": "hsl(350, 84.8%, 82.0%)"  , "rgb": "rgb(248, 170, 183)"  },
+  "pride-red":      { "hex": "#e40303", "hsl": "hsl(0, 97.4%, 45.3%)"    , "rgb": "rgb(228, 3, 3)"      },
+  "pride-orange":   { "hex": "#ff8c00", "hsl": "hsl(33, 100.0%, 50.0%)"  , "rgb": "rgb(255, 140, 0)"    },
+  "pride-yellow":   { "hex": "#ffed00", "hsl": "hsl(56, 100.0%, 50.0%)"  , "rgb": "rgb(255, 237, 0)"    },
+  "pride-green":    { "hex": "#008026", "hsl": "hsl(138, 100.0%, 25.1%)" , "rgb": "rgb(0, 128, 38)"     },
+  "pride-blue":     { "hex": "#004cff", "hsl": "hsl(222, 100.0%, 50.0%)" , "rgb": "rgb(0, 76, 255)"     },
+  "pride-purple":   { "hex": "#743982", "hsl": "hsl(288, 39.0%, 36.7%)"  , "rgb": "rgb(116, 57, 130)"   },
+  "lesbian-burnt":  { "hex": "#d52d00", "hsl": "hsl(13, 100.0%, 41.8%)"  , "rgb": "rgb(213, 45, 0)"     },
+  "lesbian-orange": { "hex": "#ef7627", "hsl": "hsl(24, 86.2%, 54.5%)"   , "rgb": "rgb(239, 118, 39)"   },
+  "lesbian-peach":  { "hex": "#ff9a56", "hsl": "hsl(24, 100.0%, 66.9%)"  , "rgb": "rgb(255, 154, 86)"   },
+  "lesbian-pink":   { "hex": "#d162a4", "hsl": "hsl(324, 54.7%, 60.2%)"  , "rgb": "rgb(209, 98, 164)"   },
+  "lesbian-mauve":  { "hex": "#b55690", "hsl": "hsl(323, 39.1%, 52.4%)"  , "rgb": "rgb(181, 86, 144)"   },
+  "lesbian-rose":   { "hex": "#a30262", "hsl": "hsl(324, 97.6%, 32.4%)"  , "rgb": "rgb(163, 2, 98)"     }
 }

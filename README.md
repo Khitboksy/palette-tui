@@ -174,6 +174,16 @@ On first launch, palette creates `~/.config/palette/themes/theme.json` with defa
 | `k`/`K` | Saturate/desaturate 1% |
 | `p`/`P` | Pick/clear pair |
 
+### Palette Selection Mode
+
+| key | action |
+| --- | --- |
+| `j`/`k` or `Up`/`Down` | Move slection |
+| `a` | Add a new palette |
+| `n` | Add a new directories (adds to config.toml) |
+| `f` | Filter output formats for a given directory |
+| `Enter` | Select palette |
+
 ---
 
 ## Configuration
@@ -243,7 +253,7 @@ Palette files are plain JSON. Three formats are accepted:
 
 All formats are normalised to the map format on save. Missing `hsl`/`rgb` fields are recomputed from hex.
 
-> [!Warn]
+> [!Warning]  
 > Colour names are sanitized to [a-zA-Z0-9_-] on load. Names with other characters will be altered
 > (e.g., `my colour` becomes `my-colour`). This ensures palette files remain scriptable with jq and other tools.
 
