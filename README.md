@@ -55,8 +55,11 @@ Then enable the module in your home-manager or NixOS configuration:
   # Options are the same for the nixos module, just a different import
   programs.palette-tui = {
     enable = true;
- # All options are optional.  # these are the defaults:
-    # defaultDir = null;         # default palette directory to open  
+ # All options are optional.     # these are the defaults:
+    # default = {                # default palette to open on launch
+    #   dir = null;              #   directory (falls back to ~/.config/palette/palettes)
+    #   palette = null;          #   filename without .json extension
+    # };
     # themeFile = "theme.json";  # theme palette name or absolute path
     # extraDirs = [];            # additional directories to scan
     # dirFormats = {};           # per-directory save format overrides
@@ -196,8 +199,10 @@ On first launch, palette creates `~/.config/palette/themes/theme.json` with defa
 Config lives at `~/.config/palette/config.toml`. Auto-created on first run.
 
 ```toml
-# Default palette directory (falls back to ~/.config/palette/palettes)
-default_dir = "/home/you/my-palettes"
+# Default palette to open on launch
+[default]
+# dir = "/home/you/my-palettes"           # directory (falls back to ~/.config/palette/palettes)
+# palette = "catppuccin-mocha"            # filename without .json extension
 
 # Theme palette (
  # filename: local to ~/.config/palette/theme
