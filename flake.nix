@@ -23,7 +23,7 @@
           pkgs = nixpkgs.legacyPackages.${system};
         in
         {
-          default = import ./nix/package.nix { inherit pkgs; };
+          default = import ./nix/package.nix { inherit (pkgs) rustPlatform; };
         }
       );
 
