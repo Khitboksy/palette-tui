@@ -4,7 +4,7 @@ use std::time::{Duration, Instant};
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use pastel::Color;
 
-use crate::app::{App, InputMode, Mode};
+use crate::app::{App, InputMode, Mode, YesOrNoAction};
 use crate::colour::*;
 use crate::helpers;
 use crate::palette;
@@ -22,14 +22,12 @@ pub fn handle_key(key: KeyEvent, app: &mut App) -> bool {
     if let Some(ref input_mode) = app.input.mode.clone() {
         return match input_mode {
             InputMode::HexInput => handle_hex_input(app, key.code),
-            InputMode::SaveOverwrite { .. } => handle_save_overwrite(app, key.code),
-            InputMode::SaveNew => handle_save_new(app, key.code),
-            InputMode::SaveNamed { .. } => handle_save_named(app, key.code),
-            InputMode::NewPaletteName => handle_new_palette_name(app, key.code),
+            InputMode::YesOrName { .. } => handle_yes_or_name(app, key.code),
+            InputMode::YesOrNo { .. } => handle_yes_or_no(app, key.code),
+            InputMode::ItemName => handle_item_name(app, key.code),
             InputMode::NewPaletteHex => handle_new_palette_hex(app, key.code),
-            InputMode::NewPaletteColourName => handle_new_palette_colour_name(app, key.code),
             InputMode::AddDir => handle_add_dir(app, key.code),
-            InputMode::FormatSelect { .. } => handle_format_select(app, key.code),
+            InputMode::Toggles { .. } => handle_toggles(app, key.code),
         };
     }
 
@@ -195,13 +193,16 @@ fn handle_edit(app: &mut App, code: KeyCode) -> bool {
             if let Some(ref name) = app.edit.colour_name.clone() {
                 // Named colour from similar-to: skip name prompt, go to confirmation
                 app.input.buf.clear();
-                app.input.mode = Some(InputMode::SaveNamed { name: name.clone() });
+                app.input.mode = Some(InputMode::YesOrNo {
+                    prompt: format!("save {name} to palette? [y/n]: "),
+                    action: YesOrNoAction::SaveNamed { name: name.clone() },
+                });
             } else if let Some(ref name) = app.edit.base_name.clone() {
                 app.input.buf.clear();
-                app.input.mode = Some(InputMode::SaveOverwrite { name: name.clone() });
+                app.input.mode = Some(InputMode::YesOrName { name: name.clone() });
             } else {
                 app.input.buf.clear();
-                app.input.mode = Some(InputMode::SaveNew);
+                app.input.mode = Some(InputMode::ItemName);
             }
         }
         KeyCode::Char('p') => {
@@ -393,10 +394,10 @@ fn handle_palette_select(app: &mut App, code: KeyCode) -> bool {
                         app.mode = Mode::Preview;
                     }
                     PaletteSelectItem::EmptyDir(dir) => {
-                        // Start new palette creation in an an empty dir when selected
+                        // Start new palette creation in an empty dir when selected
                         app.input.new_palette_dir = Some(dir);
                         app.input.buf.clear();
-                        app.input.mode = Some(InputMode::NewPaletteName);
+                        app.input.mode = Some(InputMode::ItemName);
                     }
                 }
             }
@@ -411,7 +412,7 @@ fn handle_palette_select(app: &mut App, code: KeyCode) -> bool {
             app.input.new_palette_dir = Some(dir);
             app.palette.preview_idx = None;
             app.input.buf.clear();
-            app.input.mode = Some(InputMode::NewPaletteName);
+            app.input.mode = Some(InputMode::ItemName);
         }
         KeyCode::Char('a') => {
             // Add a new directory
@@ -433,7 +434,7 @@ fn handle_palette_select(app: &mut App, code: KeyCode) -> bool {
                 .cloned()
                 .unwrap_or_else(|| vec!["hex".to_string(), "hsl".to_string(), "rgb".to_string()]);
             app.input.format_focused = 0;
-            app.input.mode = Some(InputMode::FormatSelect {
+            app.input.mode = Some(InputMode::Toggles {
                 dir,
                 hex: formats.contains(&"hex".to_string()),
                 hsl: formats.contains(&"hsl".to_string()),
@@ -451,11 +452,12 @@ fn handle_palette_select(app: &mut App, code: KeyCode) -> bool {
 /// Each mode has its own whitelist to prevent invalid characters upfront.
 fn is_char_allowed(c: char, mode: &InputMode, buf_len: usize) -> bool {
     match mode {
-        // Names: alphanumeric, hyphens, underscores
-        InputMode::NewPaletteName | InputMode::NewPaletteColourName | InputMode::SaveNew => {
-            c.is_ascii_alphanumeric() || c == '-' || c == '_'
+        InputMode::YesOrNo { .. } => matches!(c, 'y' | 'Y' | 'n' | 'N'),
+        InputMode::YesOrName { .. } => {
+            c == 'y' || c == 'Y' || c.is_ascii_alphanumeric() || c == '-' || c == '_'
         }
-        // Paths: alphanumeric, tilde, dot, slash, hyphen, underscore, space
+        InputMode::ItemName => c.is_ascii_alphanumeric() || c == '-' || c == '_',
+        InputMode::Toggles { .. } => false,
         InputMode::AddDir => {
             c.is_ascii_alphanumeric()
                 || c == '~'
@@ -465,20 +467,9 @@ fn is_char_allowed(c: char, mode: &InputMode, buf_len: usize) -> bool {
                 || c == '_'
                 || c == ' '
         }
-        // Hex: # + hex digits only, max 7 chars (#ffffff)
         InputMode::HexInput | InputMode::NewPaletteHex => {
             (c == '#' || c.is_ascii_hexdigit()) && buf_len < 7
         }
-        // Overwrite: y/Y to keep original name, or type a new name
-        InputMode::SaveOverwrite { .. } => {
-            c == 'y' || c == 'Y' || c.is_ascii_alphanumeric() || c == '-' || c == '_'
-        }
-        // Named save: y/n only
-        InputMode::SaveNamed { .. } => {
-            matches!(c, 'y' | 'Y' | 'n' | 'N')
-        }
-        // FormatSelect uses toggle, not text input
-        InputMode::FormatSelect { .. } => false,
     }
 }
 
@@ -555,12 +546,12 @@ fn handle_hex_input(app: &mut App, code: KeyCode) -> bool {
     false
 }
 
-fn handle_save_overwrite(app: &mut App, code: KeyCode) -> bool {
+fn handle_yes_or_name(app: &mut App, code: KeyCode) -> bool {
     if let Some(KeyCode::Enter) = handle_text_input(app, code) {
         let answer = app.input.buf.trim().to_string();
         let save_name = if helpers::is_yes(&answer) {
             match &app.input.mode {
-                Some(InputMode::SaveOverwrite { name }) => name.clone(),
+                Some(InputMode::YesOrName { name }) => name.clone(),
                 _ => unreachable!(),
             }
         } else if !answer.is_empty() {
@@ -575,95 +566,93 @@ fn handle_save_overwrite(app: &mut App, code: KeyCode) -> bool {
     false
 }
 
-fn handle_save_named(app: &mut App, code: KeyCode) -> bool {
+fn handle_yes_or_no(app: &mut App, code: KeyCode) -> bool {
     if let Some(KeyCode::Enter) = handle_text_input(app, code) {
         let answer = app.input.buf.trim().to_string();
         if helpers::is_yes(&answer) {
-            if let Some(InputMode::SaveNamed { name }) = &app.input.mode {
-                let name = name.clone();
-                app.write_colour_to_palette(&name);
-                app.input.mode = None;
-                app.input.buf.clear();
-                app.edit.colour_name = None;
+            if let Some(InputMode::YesOrNo { action, .. }) = &app.input.mode {
+                match action {
+                    YesOrNoAction::SaveNamed { name } => {
+                        let name = name.clone();
+                        app.write_colour_to_palette(&name);
+                        app.edit.colour_name = None;
+                    }
+                    // DeleteColour and DeletePalette handled in later steps
+                    _ => {}
+                }
             }
-        } else {
-            app.input.mode = None;
-            app.input.buf.clear();
         }
-    }
-    false
-}
-
-fn handle_save_new(app: &mut App, code: KeyCode) -> bool {
-    if let Some(KeyCode::Enter) = handle_text_input(app, code) {
-        let name = app.input.buf.trim().to_string();
-        if name.is_empty() {
-            app.set_status_error("colour name cannot be empty");
-            app.input.mode = None;
-            app.input.buf.clear();
-            return false;
-        }
-        if !helpers::validate_name(&name) {
-            app.set_status_error("colour name: only letters, numbers, - and _ allowed");
-            return false;
-        }
-        app.write_colour_to_palette(&name);
         app.input.mode = None;
         app.input.buf.clear();
     }
     false
 }
 
-// New palette creation flow
-fn handle_new_palette_name(app: &mut App, code: KeyCode) -> bool {
-    // Extra Esc cleanup for this handler
-    if code == KeyCode::Esc {
-        app.input.new_palette_dir = None;
-    }
+/// Generic item name handler (alphanumeric, -, _). Used for colour names,
+/// palette names, or any other named item. Validates and returns the name
+/// through the buffer -- callers inspect the buffer after Enter.
+fn handle_item_name(app: &mut App, code: KeyCode) -> bool {
     if let Some(KeyCode::Enter) = handle_text_input(app, code) {
         let name = app.input.buf.trim().to_string();
         if name.is_empty() {
-            app.set_status_error("palette name cannot be empty");
+            app.set_status_error("name cannot be empty");
             app.input.mode = None;
             app.input.buf.clear();
-            app.input.new_palette_dir = None;
             return false;
         }
         if !helpers::validate_name(&name) {
-            app.set_status_error("palette name: only letters, numbers, - and _ allowed");
+            app.set_status_error("only letters, numbers, - and _ allowed");
+            return false;
+        }
+        // If there's a pending palette creation dir, this is a palette name
+        if app.input.new_palette_dir.is_some() {
+            let dir = app
+                .input
+                .new_palette_dir
+                .clone()
+                .unwrap_or_else(|| app.palette.config.default_dir_path());
+            match palette::create_palette(&dir, &name) {
+                Ok(path) => {
+                    app.rescan();
+                    if let Some(pos) = app.palette.palettes.iter().position(|pf| pf.path == path) {
+                        app.load_palette(pos);
+                        app.palette.cursor = pos;
+                    }
+                    app.input.new_palette_hex = None;
+                    app.input.buf.clear();
+                    app.input.mode = Some(InputMode::NewPaletteHex);
+                    app.set_status_ok(&format!("created {name}"));
+                }
+                Err(e) => {
+                    app.set_status_error(&e);
+                    app.input.mode = None;
+                    app.input.buf.clear();
+                    app.input.new_palette_dir = None;
+                }
+            }
+        } else if let Some(hex) = app.input.new_palette_hex.take() {
+            // Colour name for new palette
+            app.dirty = true;
+            app.current = hex_to_color(&hex);
+            app.is_random = false;
+            app.write_colour_to_palette(&name);
+            let idx = app.palette.idx;
+            app.load_palette(idx);
+            app.mode = Mode::Preview;
             app.input.mode = None;
             app.input.buf.clear();
             app.input.new_palette_dir = None;
-            return false;
-        }
-        let dir = app
-            .input
-            .new_palette_dir
-            .clone()
-            .unwrap_or_else(|| app.palette.config.default_dir_path());
-        match palette::create_palette(&dir, &name) {
-            Ok(path) => {
-                app.rescan();
-                if let Some(pos) = app.palette.palettes.iter().position(|pf| pf.path == path) {
-                    app.load_palette(pos);
-                    app.palette.cursor = pos;
-                }
-                app.input.new_palette_hex = None;
-                app.input.buf.clear();
-                app.input.mode = Some(InputMode::NewPaletteHex);
-                app.set_status_ok(&format!("created {name}"));
-            }
-            Err(e) => {
-                app.set_status_error(&e);
-                app.input.mode = None;
-                app.input.buf.clear();
-                app.input.new_palette_dir = None;
-            }
+        } else {
+            // Plain colour name (save new in edit mode)
+            app.write_colour_to_palette(&name);
+            app.input.mode = None;
+            app.input.buf.clear();
         }
     }
     false
 }
 
+// New palette creation flow
 fn handle_new_palette_hex(app: &mut App, code: KeyCode) -> bool {
     // Extra Esc cleanup for this handler
     if code == KeyCode::Esc {
@@ -675,45 +664,11 @@ fn handle_new_palette_hex(app: &mut App, code: KeyCode) -> bool {
         if let Some(clean) = normalize_hex(&hex) {
             app.input.new_palette_hex = Some(clean);
             app.input.buf.clear();
-            app.input.mode = Some(InputMode::NewPaletteColourName);
+            app.input.mode = Some(InputMode::ItemName);
         } else {
             app.set_status_error("invalid hex");
             app.input.buf.clear();
         }
-    }
-    false
-}
-
-fn handle_new_palette_colour_name(app: &mut App, code: KeyCode) -> bool {
-    // Extra Esc cleanup for this handler
-    if code == KeyCode::Esc {
-        app.input.new_palette_hex = None;
-        app.input.new_palette_dir = None;
-    }
-    if let Some(KeyCode::Enter) = handle_text_input(app, code) {
-        let colour_name = app.input.buf.trim().to_string();
-        if colour_name.is_empty() {
-            app.set_status_error("colour name cannot be empty");
-            app.input.buf.clear();
-            return false;
-        }
-        if !helpers::validate_name(&colour_name) {
-            app.set_status_error("colour name: only letters, numbers, - and _ allowed");
-            app.input.buf.clear();
-            return false;
-        }
-        if let Some(hex) = app.input.new_palette_hex.take() {
-            app.dirty = true;
-            app.current = hex_to_color(&hex);
-            app.is_random = false;
-            app.write_colour_to_palette(&colour_name);
-            let idx = app.palette.idx;
-            app.load_palette(idx);
-            app.mode = Mode::Preview;
-        }
-        app.input.mode = None;
-        app.input.buf.clear();
-        app.input.new_palette_dir = None;
     }
     false
 }
@@ -766,8 +721,8 @@ fn handle_add_dir(app: &mut App, code: KeyCode) -> bool {
     false
 }
 
-// Format select flow
-fn handle_format_select(app: &mut App, code: KeyCode) -> bool {
+// Generic toggle selection flow -- h/l or arrows to move, space to toggle, Enter to confirm
+fn handle_toggles(app: &mut App, code: KeyCode) -> bool {
     match code {
         KeyCode::Esc => {
             app.input.mode = None;
@@ -783,7 +738,7 @@ fn handle_format_select(app: &mut App, code: KeyCode) -> bool {
             app.input.format_focused = (app.input.format_focused + 1) % 3;
         }
         KeyCode::Char(' ') => {
-            if let Some(InputMode::FormatSelect {
+            if let Some(InputMode::Toggles {
                 ref mut hex,
                 ref mut hsl,
                 ref mut rgb,
@@ -799,7 +754,7 @@ fn handle_format_select(app: &mut App, code: KeyCode) -> bool {
             }
         }
         KeyCode::Enter => {
-            if let Some(InputMode::FormatSelect {
+            if let Some(InputMode::Toggles {
                 ref dir,
                 hex,
                 hsl,
@@ -809,10 +764,8 @@ fn handle_format_select(app: &mut App, code: KeyCode) -> bool {
                 if hex || hsl || rgb {
                     let dir_str = dir.to_string_lossy().to_string();
                     if hex && hsl && rgb {
-                        // All on = default, remove any entry
                         app.palette.config.dir_formats.remove(&dir_str);
                     } else {
-                        // Whitelist: only the formats that are on
                         let mut formats = Vec::new();
                         if hex {
                             formats.push("hex".to_string());
