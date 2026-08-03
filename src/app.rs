@@ -558,4 +558,10 @@ impl App {
             crate::input::PaletteSelectItem::EmptyDir(dir) => dir,
         }
     }
+    pub fn clamp_palette_cursor(&mut self) {
+        let len = crate::input::palette_select_len(&self);
+        if self.palette.cursor >= len && len > 0 {
+            self.palette.cursor = len - 1;
+        }
+    }
 }

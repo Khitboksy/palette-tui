@@ -470,21 +470,13 @@ fn handle_palette_select(app: &mut App, code: KeyCode) -> bool {
                 } else {
                     app.hidden_dirs.remove(&dir);
                 }
-                // Clamp cursor
-                let len = palette_select_len(app);
-                if app.palette.cursor >= len && len > 0 {
-                    app.palette.cursor = len - 1;
-                }
+                app.clamp_palette_cursor();
             }
         }
         KeyCode::Char('h') => {
             // Toggle global visibility of hidden dirs
             app.palette.show_hidden = !app.palette.show_hidden;
-            // Clamp cursor
-            let len = palette_select_len(app);
-            if app.palette.cursor >= len && len > 0 {
-                app.palette.cursor = len - 1;
-            }
+            app.clamp_palette_cursor();
         }
         _ => {}
     }
