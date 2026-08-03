@@ -49,11 +49,13 @@ in
 
     dirFormats = lib.mkOption {
       type = lib.types.attrsOf (
-        lib.types.enum [
-          "hex"
-          "rgb"
-          "hsl"
-        ]
+        lib.types.listOf (
+          lib.types.enum [
+            "hex"
+            "rgb"
+            "hsl"
+          ]
+        )
       );
       default = { };
       description = "Per-directory format overrides";
