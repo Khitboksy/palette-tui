@@ -9,6 +9,8 @@ use crate::colour::*;
 use crate::helpers;
 use crate::palette;
 
+use crate::palette::DirGroup;
+
 use arboard::Clipboard;
 
 /// Handle a key event. Returns true if the app should quit.
@@ -324,12 +326,25 @@ fn handle_pair_select(app: &mut App, code: KeyCode) -> bool {
     false
 }
 
+/// Returns true if a directory group should be hidden from the palette select list.
+/// A dir is hidden if:
+/// - (hidden_when_empty || hidden) AND it has no palettes AND show_hidden is off
+fn dir_hidden(dg: &DirGroup, show_hidden: bool) -> bool {
+    if show_hidden {
+        return false;
+    }
+    (dg.hidden_when_empty || dg.hidden) && dg.palette_indices.is_empty()
+}
+
 // PaletteSelect mode -- j/k move, Enter switches, n creates, a adds dir
 // Get the total number of selectable items in palette select.
 // This includes palette entries AND empty directory markers.
 fn palette_select_len(app: &App) -> usize {
     let mut count = 0;
     for dg in &app.palette.dir_groups {
+        if dir_hidden(dg, app.palette.show_hidden) {
+            continue;
+        }
         if dg.palette_indices.is_empty() {
             count += 1; // empty dir marker
         } else {
@@ -348,6 +363,9 @@ enum PaletteSelectItem {
 fn palette_select_item(app: &App, idx: usize) -> PaletteSelectItem {
     let mut count = 0;
     for dg in &app.palette.dir_groups {
+        if dir_hidden(dg, app.palette.show_hidden) {
+            continue;
+        }
         if dg.palette_indices.is_empty() {
             if count == idx {
                 return PaletteSelectItem::EmptyDir(dg.path.clone());
@@ -371,6 +389,7 @@ fn handle_palette_select(app: &mut App, code: KeyCode) -> bool {
     match code {
         KeyCode::Esc | KeyCode::Tab => {
             app.palette.preview_idx = None;
+            app.palette.show_hidden = false;
             app.status.expiry = None;
             app.input.add_dir_retry = false;
             app.mode = Mode::Preview;
@@ -466,6 +485,35 @@ fn handle_palette_select(app: &mut App, code: KeyCode) -> bool {
                 hsl: formats.contains(&"hsl".to_string()),
                 rgb: formats.contains(&"rgb".to_string()),
             });
+        }
+        KeyCode::Char('H') => {
+            // Toggle hide on the directory of the item under the cursor
+            let dir = match palette_select_item(app, app.palette.cursor) {
+                PaletteSelectItem::Palette(idx) => app.palette.palettes[idx].source_dir.clone(),
+                PaletteSelectItem::EmptyDir(dir) => dir,
+            };
+            if let Some(dg) = app.palette.dir_groups.iter_mut().find(|dg| dg.path == dir) {
+                dg.hidden = !dg.hidden;
+                if dg.hidden {
+                    app.hidden_dirs.insert(dir);
+                } else {
+                    app.hidden_dirs.remove(&dir);
+                }
+                // Clamp cursor
+                let len = palette_select_len(app);
+                if app.palette.cursor >= len && len > 0 {
+                    app.palette.cursor = len - 1;
+                }
+            }
+        }
+        KeyCode::Char('h') => {
+            // Toggle global visibility of hidden dirs
+            app.palette.show_hidden = !app.palette.show_hidden;
+            // Clamp cursor
+            let len = palette_select_len(app);
+            if app.palette.cursor >= len && len > 0 {
+                app.palette.cursor = len - 1;
+            }
         }
         _ => {}
     }
