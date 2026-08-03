@@ -1187,7 +1187,7 @@ dependencies = [
 
 [[package]]
 name = "palette"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "arboard",
  "crossterm 0.28.1",

@@ -140,6 +140,7 @@ On first launch, palette creates `~/.config/palette/themes/theme.json` with defa
 | `Tab` | Open palette selector |
 | `r` | Generate random colour |
 | `e` | Edit current colour |
+| `D` | Delete colour from palette |
 | `.` | Reload theme |
 | `q`/`Esc` | Quit |
 
@@ -176,13 +177,17 @@ On first launch, palette creates `~/.config/palette/themes/theme.json` with defa
 
 ### Palette Selection Mode
 
-| key | action |
-| --- | --- |
-| `j`/`k` or `Up`/`Down` | Move slection |
-| `a` | Add a new palette |
-| `n` | Add a new directories (adds to config.toml) |
+| Key | Action |
+|-----|--------|
+| `j`/`k` or `Up`/`Down` | Move selection |
+| `Enter` | Select palette (or create new palette in empty dir) |
+| `Tab`/`Esc` | Exit palette selector |
+| `a` | Add a new directory |
+| `n` | Add a new palette |
 | `f` | Filter output formats for a given directory |
-| `Enter` | Select palette |
+| `D` | Delete palette |
+| `H` | Hide/unhide the directory under cursor |
+| `h` | Toggle show hidden directories |
 
 ---
 
