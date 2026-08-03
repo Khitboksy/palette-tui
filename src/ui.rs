@@ -772,7 +772,10 @@ pub fn render_palette_select(frame: &mut Frame, area: Rect, app: &App) {
 
     for dg in &app.palette.dir_groups {
         // Skip hidden dirs (hidden_when_empty || hidden) when empty and show_hidden is off
-        if (dg.hidden_when_empty || dg.hidden) && dg.palette_indices.is_empty() && !app.palette.show_hidden {
+        if (dg.hidden_when_empty || dg.hidden)
+            && dg.palette_indices.is_empty()
+            && !app.palette.show_hidden
+        {
             continue;
         }
 
