@@ -549,4 +549,13 @@ impl App {
             self.mode = Mode::PairSelect;
         }
     }
+
+    pub fn cursor_dir(&self) -> PathBuf {
+        match crate::input::palette_select_item(self, self.palette.cursor) {
+            crate::input::PaletteSelectItem::Palette(idx) => {
+                self.palette.palettes[idx].source_dir.clone()
+            }
+            crate::input::PaletteSelectItem::EmptyDir(dir) => dir,
+        }
+    }
 }

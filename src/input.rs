@@ -9,8 +9,6 @@ use crate::colour::*;
 use crate::helpers;
 use crate::palette;
 
-use crate::palette::DirGroup;
-
 use arboard::Clipboard;
 
 /// Handle a key event. Returns true if the app should quit.
@@ -172,18 +170,10 @@ fn handle_command(app: &mut App, code: KeyCode) -> bool {
             }
         }
         KeyCode::Char('p') => {
-            let len = app.visible_len();
-            if len > 0 {
-                app.pair.cursor = app.selected.max(1) % len;
-                app.mode = Mode::PairSelect;
-            }
+            app.pair_select();
         }
         KeyCode::Char('P') => {
-            app.pair.paired = None;
-            app.pair.idx = None;
-            app.pair.similar_name = None;
-            app.pair.name.clear();
-            app.set_status_ok("pair cleared");
+            app.pair_clear();
         }
         KeyCode::Tab => {
             app.palette.cursor = 0;
@@ -226,18 +216,10 @@ fn handle_edit(app: &mut App, code: KeyCode) -> bool {
             }
         }
         KeyCode::Char('p') => {
-            let len = app.visible_len();
-            if len > 0 {
-                app.pair.cursor = app.selected.max(1) % len;
-                app.mode = Mode::PairSelect;
-            }
+            app.pair_select();
         }
         KeyCode::Char('P') => {
-            app.pair.paired = None;
-            app.pair.idx = None;
-            app.pair.similar_name = None;
-            app.pair.name.clear();
-            app.set_status_ok("pair cleared");
+            app.pair_clear();
         }
         KeyCode::Char('c') => {
             // Clear colour: mark for empty hex on next write
@@ -331,40 +313,20 @@ fn handle_pair_select(app: &mut App, code: KeyCode) -> bool {
 }
 
 /// Returns true if a directory group should be hidden from the palette select list.
-/// A dir is hidden if:
-/// - (hidden_when_empty || hidden) AND it has no palettes AND show_hidden is off
-fn dir_hidden(dg: &DirGroup, show_hidden: bool) -> bool {
+pub fn dir_hidden(dg: &crate::palette::DirGroup, show_hidden: bool) -> bool {
     if show_hidden {
         return false;
     }
     (dg.hidden_when_empty || dg.hidden) && dg.palette_indices.is_empty()
 }
 
-// PaletteSelect mode -- j/k move, Enter switches, n creates, a adds dir
-// Get the total number of selectable items in palette select.
-// This includes palette entries AND empty directory markers.
-fn palette_select_len(app: &App) -> usize {
-    let mut count = 0;
-    for dg in &app.palette.dir_groups {
-        if dir_hidden(dg, app.palette.show_hidden) {
-            continue;
-        }
-        if dg.palette_indices.is_empty() {
-            count += 1; // empty dir marker
-        } else {
-            count += dg.palette_indices.len();
-        }
-    }
-    count
-}
-
-/// Map a selectable index to a PaletteSelectItem
-enum PaletteSelectItem {
+/// Map a selectable index in palette select to a PaletteSelectItem
+pub enum PaletteSelectItem {
     EmptyDir(PathBuf),
     Palette(usize), // index into app.palette.palettes
 }
 
-fn palette_select_item(app: &App, idx: usize) -> PaletteSelectItem {
+pub fn palette_select_item(app: &App, idx: usize) -> PaletteSelectItem {
     let mut count = 0;
     for dg in &app.palette.dir_groups {
         if dir_hidden(dg, app.palette.show_hidden) {
@@ -386,6 +348,21 @@ fn palette_select_item(app: &App, idx: usize) -> PaletteSelectItem {
     }
     // Fallback
     PaletteSelectItem::EmptyDir(PathBuf::new())
+}
+
+pub fn palette_select_len(app: &App) -> usize {
+    let mut count = 0;
+    for dg in &app.palette.dir_groups {
+        if dir_hidden(dg, app.palette.show_hidden) {
+            continue;
+        }
+        if dg.palette_indices.is_empty() {
+            count += 1; // empty dir marker
+        } else {
+            count += dg.palette_indices.len();
+        }
+    }
+    count
 }
 
 fn handle_palette_select(app: &mut App, code: KeyCode) -> bool {
@@ -442,11 +419,7 @@ fn handle_palette_select(app: &mut App, code: KeyCode) -> bool {
         KeyCode::Char('n') => {
             // Create a new palette and ask for directory first
             // Default to the directory of the currently highlighted palette
-            let dir = match palette_select_item(app, app.palette.cursor) {
-                PaletteSelectItem::Palette(idx) => app.palette.palettes[idx].source_dir.clone(),
-                PaletteSelectItem::EmptyDir(dir) => dir,
-            };
-            app.input.new_palette_dir = Some(dir);
+            app.input.new_palette_dir = Some(app.cursor_dir());
             app.palette.preview_idx = None;
             app.input.buf.clear();
             app.input.mode = Some(InputMode::ItemName);
@@ -470,10 +443,7 @@ fn handle_palette_select(app: &mut App, code: KeyCode) -> bool {
         }
         KeyCode::Char('f') => {
             // Set dir_formats for the highlighted directory
-            let dir = match palette_select_item(app, app.palette.cursor) {
-                PaletteSelectItem::Palette(idx) => app.palette.palettes[idx].source_dir.clone(),
-                PaletteSelectItem::EmptyDir(dir) => dir,
-            };
+            let dir = app.cursor_dir();
             // Read current formats from config (default all on)
             let formats = app
                 .palette
@@ -492,10 +462,7 @@ fn handle_palette_select(app: &mut App, code: KeyCode) -> bool {
         }
         KeyCode::Char('H') => {
             // Toggle hide on the directory of the item under the cursor
-            let dir = match palette_select_item(app, app.palette.cursor) {
-                PaletteSelectItem::Palette(idx) => app.palette.palettes[idx].source_dir.clone(),
-                PaletteSelectItem::EmptyDir(dir) => dir,
-            };
+            let dir = app.cursor_dir();
             if let Some(dg) = app.palette.dir_groups.iter_mut().find(|dg| dg.path == dir) {
                 dg.hidden = !dg.hidden;
                 if dg.hidden {
