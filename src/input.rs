@@ -112,6 +112,16 @@ fn handle_preview(app: &mut App, code: KeyCode) -> bool {
     false
 }
 
+fn copy_to_clipboard(app: &mut App, text: &str) {
+    match Clipboard::new() {
+        Ok(mut cb) => match cb.set_text(text) {
+            Ok(()) => app.set_status_ok(&format!("{text} copied")),
+            Err(e) => app.set_status_error(&format!("clipboard error: {e}")),
+        },
+        Err(e) => app.set_status_error(&format!("clipboard unavailable: {e}")),
+    }
+}
+
 // Command mode -- e, i, z, s/c/d, f, p/P
 fn handle_command(app: &mut App, code: KeyCode) -> bool {
     match code {
@@ -127,21 +137,15 @@ fn handle_command(app: &mut App, code: KeyCode) -> bool {
         }
         KeyCode::Char('s') => {
             let hex = app.current_hex();
-            let mut clipboard = Clipboard::new().unwrap();
-            clipboard.set_text(&hex).unwrap();
-            app.set_status_ok(&format!("{hex} copied"));
+            copy_to_clipboard(app, &hex);
         }
         KeyCode::Char('c') => {
             let text = format_rgb(&app.current);
-            let mut clipboard = Clipboard::new().unwrap();
-            clipboard.set_text(&text).unwrap();
-            app.set_status_ok(&format!("{text} copied"));
+            copy_to_clipboard(app, &text);
         }
         KeyCode::Char('d') => {
             let text = format_hsl(&app.current);
-            let mut clipboard = Clipboard::new().unwrap();
-            clipboard.set_text(&text).unwrap();
-            app.set_status_ok(&format!("{text} copied"));
+            copy_to_clipboard(app, &text);
         }
         KeyCode::Char('f') => {
             app.dirty = true;
