@@ -50,8 +50,9 @@ in
     dirFormats = lib.mkOption {
       type = lib.types.attrsOf (
         lib.types.enum [
-          "json"
-          "toml"
+          "hex"
+          "rgb"
+          "hsl"
         ]
       );
       default = { };
