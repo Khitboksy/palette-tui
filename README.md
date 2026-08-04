@@ -114,7 +114,13 @@ in
 After installing, run:
 
 ```bash
-palette
+palette -v # to check the version
+```
+
+or
+
+```bash
+palette # to run the program
 ```
 
 On first launch, palette creates `~/.config/palette/themes/theme.json` with default colours. You will see the theme palette loaded in the left pane with the Catppuccin Mocha sample palette available.
@@ -621,3 +627,9 @@ cargo fmt               # format
 - [arboard](https://github.com/1Password/arboard) -- clipboard access
 - [toml](https://github.com/toml-rs/toml) -- config parsing
 - [rand](https://rust-random.github.io/book/) -- random colour generation
+
+---
+
+## License
+
+[GPL-3.0](./LICENSE.md)
