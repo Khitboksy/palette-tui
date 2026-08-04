@@ -317,7 +317,7 @@ pub fn dir_hidden(dg: &crate::palette::DirGroup, show_hidden: bool) -> bool {
     if show_hidden {
         return false;
     }
-    (dg.hidden_when_empty || dg.hidden) && dg.palette_indices.is_empty()
+    dg.hidden || (dg.hidden_when_empty && dg.palette_indices.is_empty())
 }
 
 /// Map a selectable index in palette select to a PaletteSelectItem
@@ -492,6 +492,7 @@ fn handle_palette_select(app: &mut App, code: KeyCode) -> bool {
                 } else {
                     app.hidden_dirs.remove(&dir);
                 }
+                palette::save_hidden_dirs(&app.hidden_dirs);
                 app.clamp_palette_cursor();
             }
         }

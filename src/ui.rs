@@ -7,6 +7,7 @@ use ratatui::widgets::{Block, Borders, List, ListItem, Paragraph};
 use crate::app::{App, InputMode, Mode, ThemeColors};
 use crate::colour::*;
 use crate::helpers;
+use crate::input::dir_hidden;
 
 const APP_VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -802,11 +803,8 @@ pub fn render_palette_select(frame: &mut Frame, area: Rect, app: &App) {
     let mut selectable_count: usize = 0;
 
     for dg in &app.palette.dir_groups {
-        // Skip hidden dirs (hidden_when_empty || hidden) when empty and show_hidden is off
-        if (dg.hidden_when_empty || dg.hidden)
-            && dg.palette_indices.is_empty()
-            && !app.palette.show_hidden
-        {
+        // Skip hidden dirs
+        if dir_hidden(dg, app.palette.show_hidden) {
             continue;
         }
 
@@ -849,6 +847,8 @@ pub fn render_palette_select(frame: &mut Frame, area: Rect, app: &App) {
                     Style::default()
                         .fg(app.theme.pointer)
                         .add_modifier(Modifier::BOLD)
+                } else if dg.hidden {
+                    Style::default().fg(app.theme.empty)
                 } else {
                     Style::default()
                 };

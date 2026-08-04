@@ -309,8 +309,14 @@ impl App {
                 level: StatusLevel::Ok,
                 expiry: None,
             },
-            hidden_dirs: HashSet::new(),
+            hidden_dirs: palette::load_hidden_dirs(),
         };
+        // Apply persisted hidden state to dir_groups
+        for dg in &mut app.palette.dir_groups {
+            if app.hidden_dirs.contains(&dg.path) {
+                dg.hidden = true;
+            }
+        }
         if let Some(msg) = theme_err {
             app.set_status_warn(&msg);
         }
