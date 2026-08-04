@@ -46,6 +46,32 @@ fn hotkey_sep(sep: &str, theme: &ThemeColors) -> Span<'static> {
     Span::styled(sep.to_string(), Style::default().fg(theme.hotkey_sep))
 }
 
+fn similar_entry_spans(
+    spans: &mut Vec<Span<'static>>,
+    name: &str,
+    hex_val: &str,
+    key: usize,
+    is_paired: bool,
+    hint_color: Color,
+    pointer_color: Color,
+) {
+    let c = hex_to_color(hex_val);
+    let r = to_ratatui_color(&c);
+    let fg = textcolor(&c);
+    if is_paired {
+        spans.push(Span::styled(" > ", Style::default().fg(pointer_color)));
+    } else {
+        spans.push(Span::styled(
+            format!("[{key}]"),
+            Style::default().fg(hint_color),
+        ));
+    }
+    spans.push(Span::styled(
+        format!("{name:<14}"),
+        Style::default().fg(fg).bg(r),
+    ));
+}
+
 /// Build hotkey hint spans from a DSL string.
 /// `|` and `-` become separators, everything else is a hotkey letter.
 fn hotkey_spans(dsl: &str, theme: &ThemeColors) -> Vec<Span<'static>> {
@@ -519,60 +545,38 @@ pub fn render_preview(frame: &mut Frame, area: Rect, app: &App) {
                     Style::default().fg(app.theme.hint),
                 )));
 
-                // Render up to 3 rows, each with column 1 (named) and column 2 (palette)
-                // Entries 0-2 are named colours (keys 1-3), entries 3-5 are palette (keys 4-6)
                 for row in 0..3 {
                     let mut spans: Vec<Span> = Vec::new();
                     spans.push(Span::raw("  "));
 
-                    // Column 1: named colour (index row)
+                    // Column 1: named colour (index row, key 1-3)
                     if let Some((name, hex_val)) = app.similar_to.get(row) {
-                        let c = hex_to_color(hex_val);
-                        let r = to_ratatui_color(&c);
-                        let fg = textcolor(&c);
-                        // Show > for paired item (match by name, not index)
-                        if app.pair.similar_name.as_deref() == Some(name.as_str()) {
-                            spans.push(Span::styled(
-                                " > ",
-                                Style::default().fg(app.theme.pointer_paired),
-                            ));
-                        } else {
-                            spans.push(Span::styled(
-                                format!("[{}]", row + 1),
-                                Style::default().fg(app.theme.hint),
-                            ));
-                        }
-                        spans.push(Span::styled(
-                            format!("{name:<14}"),
-                            Style::default().fg(fg).bg(r),
-                        ));
+                        similar_entry_spans(
+                            &mut spans,
+                            name,
+                            hex_val,
+                            row + 1,
+                            app.pair.similar_name.as_deref() == Some(name.as_str()),
+                            app.theme.hint,
+                            app.theme.pointer_paired,
+                        );
                     } else {
                         spans.push(Span::raw("                   "));
                     }
 
                     spans.push(Span::raw("  "));
 
-                    // Column 2: palette colour (index row + 3)
+                    // Column 2: palette colour (index row+3, key 4-6)
                     if let Some((name, hex_val)) = app.similar_to.get(row + 3) {
-                        let c = hex_to_color(hex_val);
-                        let r = to_ratatui_color(&c);
-                        let fg = textcolor(&c);
-                        // Show > for paired item (match by name, not index)
-                        if app.pair.similar_name.as_deref() == Some(name.as_str()) {
-                            spans.push(Span::styled(
-                                " > ",
-                                Style::default().fg(app.theme.pointer_paired),
-                            ));
-                        } else {
-                            spans.push(Span::styled(
-                                format!("[{}]", row + 4),
-                                Style::default().fg(app.theme.hint),
-                            ));
-                        }
-                        spans.push(Span::styled(
-                            format!("{name:<14}"),
-                            Style::default().fg(fg).bg(r),
-                        ));
+                        similar_entry_spans(
+                            &mut spans,
+                            name,
+                            hex_val,
+                            row + 4,
+                            app.pair.similar_name.as_deref() == Some(name.as_str()),
+                            app.theme.hint,
+                            app.theme.pointer_paired,
+                        );
                     }
 
                     sim_lines.push(Line::from(spans));
