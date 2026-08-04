@@ -101,7 +101,7 @@ fn handle_preview(app: &mut App, code: KeyCode) -> bool {
             });
         }
         KeyCode::Tab => {
-            app.palette.cursor = 0;
+            app.palette.cursor = palette_idx_to_cursor(app, app.palette.idx);
             app.palette.preview_idx = Some(app.palette.idx);
             app.mode = Mode::PaletteSelect;
         }
@@ -176,7 +176,7 @@ fn handle_command(app: &mut App, code: KeyCode) -> bool {
             app.pair_clear();
         }
         KeyCode::Tab => {
-            app.palette.cursor = 0;
+            app.palette.cursor = palette_idx_to_cursor(app, app.palette.idx);
             app.palette.preview_idx = Some(app.palette.idx);
             app.mode = Mode::PaletteSelect;
         }
@@ -363,6 +363,28 @@ pub fn palette_select_len(app: &App) -> usize {
         }
     }
     count
+}
+
+/// Find the cursor position that corresponds to a palette index.
+/// Returns 0 if the palette isn't found in the visible list.
+fn palette_idx_to_cursor(app: &App, palette_idx: usize) -> usize {
+    let mut count = 0;
+    for dg in &app.palette.dir_groups {
+        if dir_hidden(dg, app.palette.show_hidden) {
+            continue;
+        }
+        if dg.palette_indices.is_empty() {
+            count += 1;
+        } else {
+            for &pi in &dg.palette_indices {
+                if pi == palette_idx {
+                    return count;
+                }
+                count += 1;
+            }
+        }
+    }
+    0
 }
 
 fn handle_palette_select(app: &mut App, code: KeyCode) -> bool {
