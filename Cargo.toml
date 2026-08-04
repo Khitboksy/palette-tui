@@ -3,6 +3,10 @@ name = "palette"
 version = "1.0.1"
 edition = "2024"
 
+[[bin]]
+name = "bump"
+path = "scripts/bump.rs"
+
 [dependencies]
 ratatui = "0.30"
 crossterm = "0.28"
