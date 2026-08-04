@@ -523,8 +523,7 @@ fn handle_text_input(app: &mut App, code: KeyCode) -> Option<KeyCode> {
     let mode_ref = mode.as_ref().unwrap();
     match code {
         KeyCode::Esc => {
-            app.input.mode = None;
-            app.input.buf.clear();
+            app.reset_input();
             None
         }
         KeyCode::Enter => Some(KeyCode::Enter),
@@ -576,13 +575,11 @@ fn handle_hex_input(app: &mut App, code: KeyCode) -> bool {
             app.pair.paired = None;
             app.pair.idx = None;
             app.edit.base_name = None;
-            app.input.mode = None;
-            app.input.buf.clear();
+            app.reset_input();
             app.mode = Mode::Edit;
         } else {
             app.set_status_error("invalid hex");
-            app.input.mode = None;
-            app.input.buf.clear();
+            app.reset_input();
         }
     }
     false
@@ -599,12 +596,10 @@ fn handle_yes_or_name(app: &mut App, code: KeyCode) -> bool {
         } else if !answer.is_empty() {
             answer
         } else {
-            app.input.mode = None;
-            app.input.buf.clear();
+            app.reset_input();
             return false;
         };
-        app.input.mode = None;
-        app.input.buf.clear();
+        app.reset_input();
         app.write_colour_to_palette(&save_name);
     }
     false
@@ -664,8 +659,7 @@ fn handle_yes_or_no(app: &mut App, code: KeyCode) -> bool {
                 }
             }
         }
-        app.input.mode = None;
-        app.input.buf.clear();
+        app.reset_input();
     }
     false
 }
@@ -678,8 +672,7 @@ fn handle_item_name(app: &mut App, code: KeyCode) -> bool {
         let name = app.input.buf.trim().to_string();
         if name.is_empty() {
             app.set_status_error("name cannot be empty");
-            app.input.mode = None;
-            app.input.buf.clear();
+            app.reset_input();
             return false;
         }
         if !helpers::validate_name(&name) {
@@ -707,8 +700,7 @@ fn handle_item_name(app: &mut App, code: KeyCode) -> bool {
                 }
                 Err(e) => {
                     app.set_status_error(&e);
-                    app.input.mode = None;
-                    app.input.buf.clear();
+                    app.reset_input();
                     app.input.new_palette_dir = None;
                 }
             }
@@ -721,14 +713,12 @@ fn handle_item_name(app: &mut App, code: KeyCode) -> bool {
             let idx = app.palette.idx;
             app.load_palette(idx);
             app.mode = Mode::Preview;
-            app.input.mode = None;
-            app.input.buf.clear();
+            app.reset_input();
             app.input.new_palette_dir = None;
         } else {
             // Plain colour name (save new in edit mode)
             app.write_colour_to_palette(&name);
-            app.input.mode = None;
-            app.input.buf.clear();
+            app.reset_input();
         }
     }
     false
@@ -760,8 +750,7 @@ fn handle_add_dir(app: &mut App, code: KeyCode) -> bool {
     if let Some(KeyCode::Enter) = handle_text_input(app, code) {
         let dir = app.input.buf.trim().to_string();
         if dir.is_empty() {
-            app.input.mode = None;
-            app.input.buf.clear();
+            app.reset_input();
             return false;
         }
         if !helpers::validate_dir_path(&dir) {
@@ -774,8 +763,7 @@ fn handle_add_dir(app: &mut App, code: KeyCode) -> bool {
             app.set_status_warn(&format!("'{}' is not a directory", resolved));
             app.status.expiry = Some(Instant::now() + Duration::from_secs(5));
             app.input.add_dir_retry = true;
-            app.input.mode = None;
-            app.input.buf.clear();
+            app.reset_input();
             return false;
         }
         if app.palette.config.add_extra_dir(&resolved) {
@@ -797,8 +785,7 @@ fn handle_add_dir(app: &mut App, code: KeyCode) -> bool {
             app.status.expiry = None;
             app.input.add_dir_retry = false;
         }
-        app.input.mode = None;
-        app.input.buf.clear();
+        app.reset_input();
     }
     false
 }

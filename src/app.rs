@@ -507,6 +507,12 @@ impl App {
         }
     }
 
+    /// Clear input mode and buffer -- the common "dismiss prompt" action.
+    pub fn reset_input(&mut self) {
+        self.input.mode = None;
+        self.input.buf.clear();
+    }
+
     pub fn write_colour_to_palette(&mut self, name: &str) {
         if self.palette.idx >= self.palette.palettes.len() {
             self.set_status_error("No palette loaded");
