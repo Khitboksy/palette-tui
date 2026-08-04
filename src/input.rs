@@ -40,6 +40,12 @@ pub fn handle_key(key: KeyEvent, app: &mut App) -> bool {
     }
 }
 
+fn enter_palette_select(app: &mut App) {
+    app.palette.cursor = palette_idx_to_cursor(app, app.palette.idx);
+    app.palette.preview_idx = Some(app.palette.idx);
+    app.mode = Mode::PaletteSelect;
+}
+
 // Preview mode -- j/k move, Enter selects, h/l switch palettes, q quits
 fn handle_preview(app: &mut App, code: KeyCode) -> bool {
     match code {
@@ -101,9 +107,7 @@ fn handle_preview(app: &mut App, code: KeyCode) -> bool {
             });
         }
         KeyCode::Tab => {
-            app.palette.cursor = palette_idx_to_cursor(app, app.palette.idx);
-            app.palette.preview_idx = Some(app.palette.idx);
-            app.mode = Mode::PaletteSelect;
+            enter_palette_select(app);
         }
         _ => {}
     }
@@ -176,9 +180,7 @@ fn handle_command(app: &mut App, code: KeyCode) -> bool {
             app.pair_clear();
         }
         KeyCode::Tab => {
-            app.palette.cursor = palette_idx_to_cursor(app, app.palette.idx);
-            app.palette.preview_idx = Some(app.palette.idx);
-            app.mode = Mode::PaletteSelect;
+            enter_palette_select(app);
         }
         _ => {}
     }
