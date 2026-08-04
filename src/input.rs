@@ -200,6 +200,7 @@ fn handle_edit(app: &mut App, code: KeyCode) -> bool {
             app.mode = Mode::Preview;
         }
         KeyCode::Char('w') => {
+            app.clear_status();
             if let Some(ref name) = app.edit.colour_name.clone() {
                 // Named colour from similar-to: skip name prompt, go to confirmation
                 app.input.buf.clear();
@@ -621,6 +622,8 @@ fn handle_yes_or_name(app: &mut App, code: KeyCode) -> bool {
             app.input.buf.clear();
             return false;
         };
+        app.input.mode = None;
+        app.input.buf.clear();
         app.write_colour_to_palette(&save_name);
     }
     false
@@ -643,28 +646,39 @@ fn handle_yes_or_no(app: &mut App, code: KeyCode) -> bool {
                     } => {
                         let colour_name = colour_name.clone();
                         let palette_idx = *palette_idx;
+                        let mut deleted = false;
                         if let Some(pf) = app.palette.palettes.get_mut(palette_idx) {
                             if let Err(e) = pf.remove_colour(&colour_name) {
                                 app.set_status_error(&e);
                             } else {
-                                app.set_status_ok(&format!("deleted {colour_name}"));
+                                deleted = true;
                             }
                         }
                         app.rescan();
+                        app.load_palette(app.palette.idx);
+                        if deleted {
+                            app.set_status_ok(&format!("deleted {colour_name}"));
+                        }
                         app.mode = Mode::Preview;
                     }
                     YesOrNoAction::DeletePalette { palette_idx } => {
                         let palette_idx = *palette_idx;
+                        let mut deleted_name = None;
                         if let Some(pf) = app.palette.palettes.get(palette_idx) {
                             let path = pf.path.clone();
                             if let Err(e) = palette::remove_palette_file(&path) {
                                 app.set_status_error(&e);
                             } else {
-                                app.set_status_ok(&format!("deleted {}", pf.name));
+                                deleted_name = Some(pf.name.clone());
                             }
                         }
                         app.rescan();
-                        app.mode = Mode::Preview;
+                        app.load_palette(app.palette.idx);
+                        app.clamp_palette_cursor();
+                        if let Some(name) = deleted_name {
+                            app.set_status_ok(&format!("deleted {name}"));
+                        }
+                        app.mode = Mode::PaletteSelect;
                     }
                 }
             }
