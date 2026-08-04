@@ -435,6 +435,7 @@ impl App {
     pub fn select(&mut self, idx: usize) {
         self.dirty = true;
         self.selected = idx;
+        self.clear_status();
         if self.is_random && idx == 0 {
             self.current = hex_to_color(&self.random_hex);
             self.current_empty = false;
@@ -535,7 +536,6 @@ impl App {
         match pal.save(&self.palette.config.dir_formats) {
             Ok(()) => {
                 self.edit.clearing = false;
-                self.set_status_ok(&format!("{name} written"));
                 // Reload palette to update the colour list
                 let idx = self.palette.idx;
                 self.load_palette(idx);
@@ -545,6 +545,7 @@ impl App {
                     self.current = hex_to_color(&self.colours[pos].1);
                 }
                 self.mode = Mode::Command;
+                self.set_status_ok(&format!("{name} written"));
             }
             Err(e) => {
                 self.set_status_error(&format!("failed to save \"{name}\": {e}"));
