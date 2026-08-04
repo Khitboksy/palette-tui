@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -29,6 +29,28 @@ pub fn default_palettes() -> PathBuf {
 
 pub fn themes_dir() -> PathBuf {
     xdg_config_home().join("palette").join("themes")
+}
+
+fn hidden_json_path() -> PathBuf {
+    xdg_config_home().join("palette").join("hidden.json")
+}
+
+/// Load the set of hidden directories from hidden.json.
+pub fn load_hidden_dirs() -> HashSet<PathBuf> {
+    let path = hidden_json_path();
+    match fs::read_to_string(&path) {
+        Ok(data) => serde_json::from_str(&data).unwrap_or_default(),
+        Err(_) => HashSet::new(),
+    }
+}
+
+/// Save the set of hidden directories to hidden.json.
+pub fn save_hidden_dirs(dirs: &HashSet<PathBuf>) {
+    let path = hidden_json_path();
+    let strings: Vec<String> = dirs.iter().map(|p| p.display().to_string()).collect();
+    if let Ok(data) = serde_json::to_string_pretty(&strings) {
+        let _ = fs::write(&path, data);
+    }
 }
 
 // Config
