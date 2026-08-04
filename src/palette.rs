@@ -492,6 +492,7 @@ pub struct DirGroup {
     pub palette_indices: Vec<usize>,
     pub hidden_when_empty: bool,
     pub hidden: bool,
+    pub hideable: bool,
 }
 
 // Directory scanning
@@ -528,6 +529,7 @@ pub fn scan_directories(
             palette_indices: indices,
             hidden_when_empty: hidden_dirs.contains(dir),
             hidden: false,
+            hideable: true,
         });
     }
 

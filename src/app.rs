@@ -225,9 +225,30 @@ impl App {
         let (theme, theme_err) = palette::load_or_spawn_theme(&config);
 
         // Now scan directories (theme.json exists if it was just created)
-        let dirs = config.all_dirs();
-        let (palettes, dir_groups, scan_warnings) =
+        let mut dirs = config.all_dirs();
+
+        // Dev-only: append repo palettes dir as its own scan group
+        if std::env::var("DEV_OPTIONS").unwrap_or_default() == "1" {
+            let repo_palettes = std::path::PathBuf::from("palettes");
+            if repo_palettes.is_dir() && !dirs.contains(&repo_palettes) {
+                dirs.push(repo_palettes);
+            }
+        }
+
+        let (palettes, mut dir_groups, scan_warnings) =
             palette::scan_directories(&dirs, &[palette::default_palettes()]);
+
+        // In dev mode, mark protected dirs as non-hideable (always visible)
+        if std::env::var("DEV_OPTIONS").unwrap_or_default() == "1" {
+            let themes = palette::themes_dir();
+            let internal = palette::default_palettes();
+            let repo_palettes = std::path::PathBuf::from("palettes");
+            for dg in &mut dir_groups {
+                if dg.path == themes || dg.path == internal || dg.path == repo_palettes {
+                    dg.hideable = false;
+                }
+            }
+        }
 
         // Find the initial palette: match by name if default.palette is set,
         // otherwise the first palette from the default dir.

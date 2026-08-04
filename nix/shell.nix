@@ -11,4 +11,7 @@ pkgs.mkShellNoCC {
     cargo-watch
     gcc
   ];
+  env = {
+    DEV_OPTIONS = "1";
+  };
 }

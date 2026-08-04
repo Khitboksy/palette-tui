@@ -2,6 +2,12 @@ use std::fs;
 use std::process;
 
 fn main() {
+    // Block the entire script if DEV_OPTIONS is 0
+    if std::env::var("DEV_OPTIONS").unwrap_or_default() != "1" {
+        eprintln!("bump: dev-only tool (set DEV_OPTIONS=1 or use `nix develop`)");
+        process::exit(1);
+    }
+
     let args: Vec<String> = std::env::args().collect();
     let bump = match args.get(1).map(|s| s.as_str()) {
         Some("-p") | Some("--patch") => "patch",

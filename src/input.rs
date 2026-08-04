@@ -487,14 +487,18 @@ fn handle_palette_select(app: &mut App, code: KeyCode) -> bool {
             // Toggle hide on the directory of the item under the cursor
             let dir = app.cursor_dir();
             if let Some(dg) = app.palette.dir_groups.iter_mut().find(|dg| dg.path == dir) {
-                dg.hidden = !dg.hidden;
-                if dg.hidden {
-                    app.hidden_dirs.insert(dir);
+                if !dg.hideable {
+                    app.set_status_warn("cannot hide this directory");
                 } else {
-                    app.hidden_dirs.remove(&dir);
+                    dg.hidden = !dg.hidden;
+                    if dg.hidden {
+                        app.hidden_dirs.insert(dir);
+                    } else {
+                        app.hidden_dirs.remove(&dir);
+                    }
+                    palette::save_hidden_dirs(&app.hidden_dirs);
+                    app.clamp_palette_cursor();
                 }
-                palette::save_hidden_dirs(&app.hidden_dirs);
-                app.clamp_palette_cursor();
             }
         }
         KeyCode::Char('h') => {

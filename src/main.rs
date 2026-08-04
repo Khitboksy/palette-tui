@@ -16,7 +16,6 @@ use input::handle_key;
 use palette::Config;
 
 fn main() -> io::Result<()> {
-
     let args: Vec<String> = std::env::args().collect();
     if args.iter().any(|a| a == "--version" || a == "-v") {
         println!("palette-tui: v{}", env!("CARGO_PKG_VERSION"));
@@ -27,24 +26,6 @@ fn main() -> io::Result<()> {
 
     let config = Config::load();
     let mut app = App::new(config);
-
-    // Fallback: if no palettes found, try ./palettes relative to cwd
-    // Only relevent when running via dev tooling.
-    if app.palette.palettes.is_empty() {
-        let fallback = std::path::Path::new("palettes");
-        if fallback.is_dir() {
-            let dirs = vec![fallback.to_path_buf()];
-            let (palettes, dir_groups, scan_warnings) = palette::scan_directories(&dirs, &[]);
-            app.palette.palettes = palettes;
-            app.palette.dir_groups = dir_groups;
-            for msg in scan_warnings {
-                app.set_status_warn(&msg);
-            }
-            if !app.palette.palettes.is_empty() {
-                app.load_palette(0);
-            }
-        }
-    }
 
     loop {
         // Compute similar-to colours before rendering
