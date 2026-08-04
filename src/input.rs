@@ -327,65 +327,42 @@ pub enum PaletteSelectItem {
     Palette(usize), // index into app.palette.palettes
 }
 
-pub fn palette_select_item(app: &App, idx: usize) -> PaletteSelectItem {
-    let mut count = 0;
+/// Collect all visible selectable items in palette select order.
+fn visible_items(app: &App) -> Vec<PaletteSelectItem> {
+    let mut items = Vec::new();
     for dg in &app.palette.dir_groups {
         if dir_hidden(dg, app.palette.show_hidden) {
             continue;
         }
         if dg.palette_indices.is_empty() {
-            if count == idx {
-                return PaletteSelectItem::EmptyDir(dg.path.clone());
-            }
-            count += 1;
+            items.push(PaletteSelectItem::EmptyDir(dg.path.clone()));
         } else {
             for &pi in &dg.palette_indices {
-                if count == idx {
-                    return PaletteSelectItem::Palette(pi);
-                }
-                count += 1;
+                items.push(PaletteSelectItem::Palette(pi));
             }
         }
     }
-    // Fallback
-    PaletteSelectItem::EmptyDir(PathBuf::new())
+    items
+}
+
+pub fn palette_select_item(app: &App, idx: usize) -> PaletteSelectItem {
+    visible_items(app)
+        .into_iter()
+        .nth(idx)
+        .unwrap_or(PaletteSelectItem::EmptyDir(PathBuf::new()))
 }
 
 pub fn palette_select_len(app: &App) -> usize {
-    let mut count = 0;
-    for dg in &app.palette.dir_groups {
-        if dir_hidden(dg, app.palette.show_hidden) {
-            continue;
-        }
-        if dg.palette_indices.is_empty() {
-            count += 1; // empty dir marker
-        } else {
-            count += dg.palette_indices.len();
-        }
-    }
-    count
+    visible_items(app).len()
 }
 
 /// Find the cursor position that corresponds to a palette index.
 /// Returns 0 if the palette isn't found in the visible list.
 fn palette_idx_to_cursor(app: &App, palette_idx: usize) -> usize {
-    let mut count = 0;
-    for dg in &app.palette.dir_groups {
-        if dir_hidden(dg, app.palette.show_hidden) {
-            continue;
-        }
-        if dg.palette_indices.is_empty() {
-            count += 1;
-        } else {
-            for &pi in &dg.palette_indices {
-                if pi == palette_idx {
-                    return count;
-                }
-                count += 1;
-            }
-        }
-    }
-    0
+    visible_items(app)
+        .iter()
+        .position(|item| matches!(item, PaletteSelectItem::Palette(pi) if *pi == palette_idx))
+        .unwrap_or(0)
 }
 
 fn handle_palette_select(app: &mut App, code: KeyCode) -> bool {

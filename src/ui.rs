@@ -807,8 +807,13 @@ pub fn render_palette_select(frame: &mut Frame, area: Rect, app: &App) {
         }
 
         // Directory header (non-selectable)
-        // Show path relative to home directory
-        let dir_display = helpers::collapse_home(&dg.path.display().to_string());
+        // Show path relative to home directory, prepend ./ for relative paths
+        let raw_path = dg.path.display().to_string();
+        let dir_display = if dg.path.is_relative() {
+            format!("./{raw_path}")
+        } else {
+            helpers::collapse_home(&raw_path)
+        };
         let header_span = Span::styled(
             format!("  {dir_display}"),
             Style::default()
