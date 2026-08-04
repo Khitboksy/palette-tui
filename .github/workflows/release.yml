@@ -50,7 +50,20 @@ jobs:
           tar czf "${DIR}.tar.gz" "$DIR"
           echo "ASSET=${DIR}.tar.gz" >> "$GITHUB_ENV"
 
+      - name: Extract changelog
+        if: matrix.target == 'x86_64-unknown-linux-gnu'
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          # Extract section between this version's heading and the next ## [ heading
+          sed -n "/^## \[${TAG}\]/,/^## \[/p" CHANGELOG.md | sed '$d' > release_notes.md
+          # Fallback if no section found
+          if [ ! -s release_notes.md ]; then
+            echo "No changelog entry for ${TAG}" > release_notes.md
+          fi
+
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          body_path: ${{ matrix.target == 'x86_64-unknown-linux-gnu' && 'release_notes.md'
+            || '' }}
           files: ${{ env.ASSET }}
