@@ -8,6 +8,23 @@ use crate::app::{App, InputMode, Mode, ThemeColors};
 use crate::colour::*;
 use crate::helpers;
 
+const APP_VERSION: &str = env!("CARGO_PKG_VERSION");
+
+fn show_version(app: &App, frame: &mut Frame) {
+    let version_text = hotkey_spans(&format!(" v{} ", APP_VERSION), &app.theme);
+    let version_width = version_text.len() as u16;
+    let area = frame.area();
+    frame.render_widget(
+        Paragraph::new(Line::from(version_text)),
+        Rect {
+            x: area.x + area.width - version_width - 3,
+            y: area.y + area.height - 1,
+            width: version_width + 2,
+            height: 1,
+        },
+    );
+}
+
 // Fill the entire frame with the theme background colour.
 // If bg is Color::Reset, the terminal's default background is used.
 pub fn render_background(frame: &mut Frame, theme: &ThemeColors) {
@@ -19,6 +36,8 @@ pub fn render_background(frame: &mut Frame, theme: &ThemeColors) {
     let block = Block::default().style(bg_style);
     frame.render_widget(block, area);
 }
+
+
 
 fn hotkey_letter(letter: &str, theme: &ThemeColors) -> Span<'static> {
     Span::styled(letter.to_string(), Style::default().fg(theme.hotkey))
@@ -769,6 +788,7 @@ pub fn render_preview(frame: &mut Frame, area: Rect, app: &App) {
             },
         );
     }
+    show_version(&app, frame);
 }
 
 // render_palette_select. palette chooser overlay in the right panel
@@ -888,4 +908,5 @@ pub fn render_palette_select(frame: &mut Frame, area: Rect, app: &App) {
             height: 1,
         },
     );
+    show_version(&app, frame);
 }
