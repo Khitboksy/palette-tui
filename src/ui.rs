@@ -38,8 +38,6 @@ pub fn render_background(frame: &mut Frame, theme: &ThemeColors) {
     frame.render_widget(block, area);
 }
 
-
-
 fn hotkey_letter(letter: &str, theme: &ThemeColors) -> Span<'static> {
     Span::styled(letter.to_string(), Style::default().fg(theme.hotkey))
 }

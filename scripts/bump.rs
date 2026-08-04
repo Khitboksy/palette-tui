@@ -34,9 +34,18 @@ fn main() {
     let (mut major, mut minor, mut patch) = (parts[0], parts[1], parts[2]);
 
     match bump {
-        "major" => { major += 1; minor = 0; patch = 0; }
-        "minor" => { minor += 1; patch = 0; }
-        "patch" => { patch += 1; }
+        "major" => {
+            major += 1;
+            minor = 0;
+            patch = 0;
+        }
+        "minor" => {
+            minor += 1;
+            patch = 0;
+        }
+        "patch" => {
+            patch += 1;
+        }
         _ => unreachable!(),
     }
     let new_version = format!("{major}.{minor}.{patch}");
