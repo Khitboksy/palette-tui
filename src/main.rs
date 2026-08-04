@@ -16,6 +16,13 @@ use input::handle_key;
 use palette::Config;
 
 fn main() -> io::Result<()> {
+
+    let args: Vec<String> = std::env::args().collect();
+    if args.iter().any(|a| a == "--version" || a == "-v") {
+        println!("palette-tui: v{}", env!("CARGO_PKG_VERSION"));
+        return Ok(());
+    }
+
     let mut terminal = ratatui::init();
 
     let config = Config::load();
