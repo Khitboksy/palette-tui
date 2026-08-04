@@ -274,22 +274,11 @@ impl App {
             })
             .unwrap_or(0);
 
-        let mut colours = Vec::new();
-        let mut current = Color::black();
-        if !palettes.is_empty() && initial_idx < palettes.len() {
-            for ce in &palettes[initial_idx].colours {
-                // Preserve original hex (empty stays empty, no conversion to #000000)
-                colours.push((ce.name.clone(), ce.hex.clone()));
-            }
-            if !colours.is_empty() {
-                current = hex_to_color(&colours[0].1);
-            }
-        }
         let mut app = Self {
-            colours,
+            colours: Vec::new(),
             selected: 0,
             mode: Mode::Preview,
-            current,
+            current: Color::black(),
             is_random: false,
             random_hex: String::new(),
             current_empty: false,
@@ -338,6 +327,7 @@ impl App {
                 dg.hidden = true;
             }
         }
+        app.load_palette(initial_idx);
         if let Some(msg) = theme_err {
             app.set_status_warn(&msg);
         }
