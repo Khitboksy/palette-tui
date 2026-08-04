@@ -46,6 +46,14 @@ fn enter_palette_select(app: &mut App) {
     app.mode = Mode::PaletteSelect;
 }
 
+fn prev_cursor(cursor: usize, len: usize) -> usize {
+    if cursor == 0 { len - 1 } else { cursor - 1 }
+}
+
+fn next_cursor(cursor: usize, len: usize) -> usize {
+    (cursor + 1) % len
+}
+
 // Preview mode -- j/k move, Enter selects, h/l switch palettes, q quits
 fn handle_preview(app: &mut App, code: KeyCode) -> bool {
     match code {
@@ -272,17 +280,13 @@ fn handle_pair_select(app: &mut App, code: KeyCode) -> bool {
         KeyCode::Up | KeyCode::Char('k') => {
             let len = app.visible_len();
             if len > 0 {
-                app.pair.cursor = if app.pair.cursor == 0 {
-                    len - 1
-                } else {
-                    app.pair.cursor - 1
-                };
+                app.pair.cursor = prev_cursor(app.pair.cursor, len);
             }
         }
         KeyCode::Down | KeyCode::Char('j') => {
             let len = app.visible_len();
             if len > 0 {
-                app.pair.cursor = (app.pair.cursor + 1) % len;
+                app.pair.cursor = next_cursor(app.pair.cursor, len);
             }
         }
         KeyCode::Char(c @ '1'..='6') => {
@@ -378,19 +382,13 @@ fn handle_palette_select(app: &mut App, code: KeyCode) -> bool {
             app.mode = Mode::Preview;
         }
         KeyCode::Up | KeyCode::Char('k') if len > 0 => {
-            app.palette.cursor = if app.palette.cursor == 0 {
-                len - 1
-            } else {
-                app.palette.cursor - 1
-            };
-            // Update preview
+            app.palette.cursor = prev_cursor(app.palette.cursor, len);
             if let PaletteSelectItem::Palette(idx) = palette_select_item(app, app.palette.cursor) {
                 app.palette.preview_idx = Some(idx);
             }
         }
         KeyCode::Down | KeyCode::Char('j') if len > 0 => {
-            app.palette.cursor = (app.palette.cursor + 1) % len;
-            // Update preview
+            app.palette.cursor = next_cursor(app.palette.cursor, len);
             if let PaletteSelectItem::Palette(idx) = palette_select_item(app, app.palette.cursor) {
                 app.palette.preview_idx = Some(idx);
             }
