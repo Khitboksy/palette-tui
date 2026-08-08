@@ -14,6 +14,7 @@ pkgs.mkShellNoCC {
     gcc
 
     # Nix
+    nixfmt
     nixfmt-tree
     nixd
     statix
@@ -26,7 +27,7 @@ pkgs.mkShellNoCC {
     echo "palette-tui dev environment"
     echo "  rust fmt:   cargo fmt"
     echo "  rust lsp:   rust-analyzer"
-    echo "  nix fmt:    nixfmt-tree"
+    echo "  nix fmt:    nixfmt"
     echo "  nix lsp:    nixd"
     echo "  nix lint:   statix. deadnix"
   '';
